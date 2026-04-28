@@ -409,7 +409,7 @@ function GuiLib.mkNotifSystem(sg)
 		local f=buildFrame(iconUrl)
 		local lbl=Instance.new('TextLabel',f)
 		lbl.Size=UDim2.fromOffset(NOTIF_W-36,NOTIF_H) lbl.Position=UDim2.fromOffset(34,0)
-		lbl.BackgroundTransparency=1 lbl.Text=text lbl.TextColor3=C_DIM lbl.TextSize=11
+		lbl.BackgroundTransparency=1 lbl.Text=text lbl.TextColor3=C_DIM lbl.TextSize=12
 		lbl.FontFace=FONT_UI lbl.TextXAlignment=Enum.TextXAlignment.Left lbl.ZIndex=1000
 		hideTimer=task.delay(duration or 3,function() dismiss(f) hideTimer=nil end)
 	end
@@ -452,7 +452,7 @@ function GuiLib.mkNotifSystem(sg)
 		end)
 
 		local btn=Instance.new('TextButton',f)
-		btn.Size=UDim2.fromOffset(54,28) btn.Position=UDim2.fromOffset(NOTIF_W-64,(NOTIF_H-28)/2)
+		btn.Size=UDim2.fromOffset(72,32) btn.Position=UDim2.fromOffset(NOTIF_W-80,(NOTIF_H-32)/2)
 		btn.BackgroundColor3=C_TEXT btn.BorderSizePixel=0
 		btn.Text=btnText or 'OK' btn.TextColor3=C_BG btn.TextSize=11 btn.FontFace=FONT_UB
 		btn.AutoButtonColor=false btn.ZIndex=1000 mkCorner(btn,6)
