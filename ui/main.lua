@@ -397,7 +397,7 @@ function GuiLib.mkNotifSystem(sg)
 			ic.BackgroundTransparency=1 ic.Image=iconUrl ic.ImageColor3=C_DIM ic.ZIndex=1000
 		end
 		tweenService:Create(f,TweenInfo.new(0.35,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
-			Position=UDim2.new(0.5,-NOTIF_W/2,1,-NOTIF_H-16)
+			Position=UDim2.new(0.5,-NOTIF_W/2,1,-NOTIF_H-20)
 		}):Play()
 		return f
 	end
@@ -408,7 +408,7 @@ function GuiLib.mkNotifSystem(sg)
 		if hideTimer then task.cancel(hideTimer) hideTimer=nil end
 		local f=buildFrame(iconUrl)
 		local lbl=Instance.new('TextLabel',f)
-		lbl.Size=UDim2.fromOffset(NOTIF_W-36,NOTIF_H) lbl.Position=UDim2.fromOffset(34,0)
+		lbl.Size=UDim2.fromOffset(NOTIF_W-40,NOTIF_H) lbl.Position=UDim2.fromOffset(36,0)
 		lbl.BackgroundTransparency=1 lbl.Text=text lbl.TextColor3=C_DIM lbl.TextSize=12
 		lbl.FontFace=FONT_UI lbl.TextXAlignment=Enum.TextXAlignment.Left lbl.ZIndex=1000
 		hideTimer=task.delay(duration or 3,function() dismiss(f) hideTimer=nil end)
