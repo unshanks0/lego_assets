@@ -389,7 +389,7 @@ function GuiLib.mkNotifSystem(sg)
 		f.Size=UDim2.fromOffset(NOTIF_W,NOTIF_H)
 		f.Position=UDim2.new(0.5,-NOTIF_W/2,1,20)
 		f.BackgroundColor3=Color3.fromRGB(14,14,14) f.BorderSizePixel=0 f.ZIndex=999
-		mkCorner(f,10) mkStroke(f,Color3.fromRGB(200,200,200),1.5)
+		mkCorner(f,10) mkStroke(f,Color3.fromRGB(255,255,255),1.5)
 		notifActive=f
 		if iconUrl and iconUrl~='' then
 			local ic=Instance.new('ImageLabel',f)
