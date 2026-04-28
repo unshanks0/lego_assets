@@ -389,7 +389,7 @@ function GuiLib.mkNotifSystem(sg)
 		f.Size=UDim2.fromOffset(NOTIF_W,NOTIF_H)
 		f.Position=UDim2.new(0.5,-NOTIF_W/2,1,20)
 		f.BackgroundColor3=Color3.fromRGB(14,14,14) f.BorderSizePixel=0 f.ZIndex=999
-		mkCorner(f,10) mkStroke(f,Color3.fromRGB(255,255,255),1.5)
+		mkCorner(f,10) mkStroke(f,Color3.new(1,1,1)) mkStroke(f,Color3.fromRGB(255,255,255),1.5)
 		notifActive=f
 		if iconUrl and iconUrl~='' then
 			local ic=Instance.new('ImageLabel',f)
@@ -426,7 +426,7 @@ function GuiLib.mkNotifSystem(sg)
 		local f=buildFrame(iconUrl)
 		local lbl=Instance.new('TextLabel',f)
 		lbl.Size=UDim2.fromOffset(NOTIF_W-180,NOTIF_H) lbl.Position=UDim2.fromOffset(34,0)
-		lbl.BackgroundTransparency=1 lbl.Text=text lbl.TextColor3=C_DIM lbl.TextSize=11
+		lbl.BackgroundTransparency=1 lbl.Text=text lbl.TextColor3=C_DIM lbl.TextSize=13
 		lbl.FontFace=FONT_UI lbl.TextXAlignment=Enum.TextXAlignment.Left lbl.ZIndex=1000
 
 		-- Auto Save toggle in notification
@@ -454,7 +454,7 @@ function GuiLib.mkNotifSystem(sg)
 		local btn=Instance.new('TextButton',f)
 		btn.Size=UDim2.fromOffset(72,32) btn.Position=UDim2.fromOffset(NOTIF_W-80,(NOTIF_H-32)/2)
 		btn.BackgroundColor3=C_TEXT btn.BorderSizePixel=0
-		btn.Text=btnText or 'OK' btn.TextColor3=C_BG btn.TextSize=11 btn.FontFace=FONT_UB
+		btn.Text=btnText or 'OK' btn.TextColor3=C_BG btn.TextSize=13 btn.FontFace=FONT_UB
 		btn.AutoButtonColor=false btn.ZIndex=1000 mkCorner(btn,6)
 		btn.MouseEnter:Connect(function() tweenService:Create(btn,TI_F,{BackgroundColor3=C_WHITE}):Play() end)
 		btn.MouseLeave:Connect(function() tweenService:Create(btn,TI_F,{BackgroundColor3=C_TEXT}):Play() end)
