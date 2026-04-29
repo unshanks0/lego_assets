@@ -525,4 +525,85 @@ function GuiLib.mkScreenGui(name, displayOrder)
 	return sg
 end
 
+function GuiLib.mkDropdown(parent, yPos, W, label, options, default, onChange)
+	local H=30 local OPT_H=26
+	local isOpen=false
+	local selectedVal=default
+
+	local row=Instance.new('Frame',parent)
+	row.Position=UDim2.fromOffset(0,yPos) row.Size=UDim2.fromOffset(W,H)
+	row.BackgroundColor3=C_PANEL row.BorderSizePixel=0 row.ClipsDescendants=false
+
+	local bar=Instance.new('Frame',row)
+	bar.Size=UDim2.fromOffset(2,H) bar.BackgroundColor3=C_TEXT bar.BorderSizePixel=0
+
+	local lbl=Instance.new('TextLabel',row)
+	lbl.Position=UDim2.fromOffset(16,0) lbl.Size=UDim2.fromOffset(W-80,H)
+	lbl.BackgroundTransparency=1 lbl.Text=label
+	lbl.TextColor3=C_DIM lbl.TextSize=11 lbl.FontFace=FONT_UI
+	lbl.TextXAlignment=Enum.TextXAlignment.Left
+
+	local valLbl=Instance.new('TextLabel',row)
+	valLbl.Size=UDim2.fromOffset(W-56,H) valLbl.Position=UDim2.fromOffset(0,0)
+	valLbl.BackgroundTransparency=1 valLbl.Text=selectedVal
+	valLbl.TextColor3=C_TEXT valLbl.TextSize=11 valLbl.FontFace=FONT_UB
+	valLbl.TextXAlignment=Enum.TextXAlignment.Right
+
+	local arrow=Instance.new('TextLabel',row)
+	arrow.Size=UDim2.fromOffset(16,H) arrow.Position=UDim2.fromOffset(W-18,0)
+	arrow.BackgroundTransparency=1 arrow.Text='v'
+	arrow.TextColor3=C_DIM arrow.TextSize=10 arrow.FontFace=FONT_UB
+	arrow.TextXAlignment=Enum.TextXAlignment.Center
+
+	local dropdown=Instance.new('Frame',row)
+	dropdown.Position=UDim2.fromOffset(0,H)
+	dropdown.Size=UDim2.fromOffset(W,#options*OPT_H)
+	dropdown.BackgroundColor3=Color3.fromRGB(10,10,10)
+	dropdown.BorderSizePixel=0 dropdown.ZIndex=200 dropdown.Visible=false
+	mkCorner(dropdown,4) mkStroke(dropdown,C_STR)
+
+	for i,opt in options do
+		local ob=Instance.new('TextButton',dropdown)
+		ob.Position=UDim2.fromOffset(0,(i-1)*OPT_H)
+		ob.Size=UDim2.fromOffset(W,OPT_H)
+		ob.BackgroundColor3=opt==selectedVal and C_TEXT or Color3.fromRGB(10,10,10)
+		ob.TextColor3=opt==selectedVal and C_BG or C_DIM
+		ob.Text=opt ob.TextSize=11 ob.FontFace=FONT_UI
+		ob.BorderSizePixel=0 ob.AutoButtonColor=false ob.ZIndex=201
+		ob.TextXAlignment=Enum.TextXAlignment.Left
+		local opad=Instance.new('UIPadding',ob)
+		opad.PaddingLeft=UDim.new(0,14)
+		ob.MouseEnter:Connect(function()
+			if opt~=selectedVal then ob.BackgroundColor3=C_HOVER end
+		end)
+		ob.MouseLeave:Connect(function()
+			if opt~=selectedVal then ob.BackgroundColor3=Color3.fromRGB(10,10,10) end
+		end)
+		ob.MouseButton1Click:Connect(function()
+			selectedVal=opt valLbl.Text=opt
+			for _,ch in dropdown:GetChildren() do
+				if ch:IsA('TextButton') then
+					ch.BackgroundColor3=ch.Text==opt and C_TEXT or Color3.fromRGB(10,10,10)
+					ch.TextColor3=ch.Text==opt and C_BG or C_DIM
+				end
+			end
+			isOpen=false dropdown.Visible=false arrow.Text='v'
+			onChange(opt)
+		end)
+	end
+
+	local btn=Instance.new('TextButton',row)
+	btn.Size=UDim2.fromScale(1,1) btn.BackgroundTransparency=1 btn.Text='' btn.ZIndex=5
+	btn.MouseButton1Click:Connect(function()
+		isOpen=not isOpen
+		dropdown.Visible=isOpen
+		arrow.Text=isOpen and '^' or 'v'
+	end)
+	row.MouseEnter:Connect(function() tweenService:Create(row,TI_F,{BackgroundColor3=C_HOVER}):Play() end)
+	row.MouseLeave:Connect(function() tweenService:Create(row,TI_F,{BackgroundColor3=C_PANEL}):Play() end)
+
+	return H, function(v) selectedVal=v valLbl.Text=v end
+end
+
+
 return GuiLib
