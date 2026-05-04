@@ -230,6 +230,31 @@ local function buildPickerPopup(sg,swatch,defaultCol,onChange)
 	end)
 end
 
+local function buildRainbowToggle(parent,yPos,W,swatch,onChange,isSubStyle)
+	local RH=20 local ind=isSubStyle and INDENT+8 or 16
+	local rb=Instance.new('Frame',parent) rb.Position=UDim2.fromOffset(0,yPos) rb.Size=UDim2.fromOffset(W,RH)
+	rb.BackgroundColor3=C_SUB rb.BorderSizePixel=0
+	local ab=Instance.new('Frame',rb) ab.Size=UDim2.fromOffset(2,RH) ab.BackgroundColor3=Color3.fromRGB(50,50,50) ab.BorderSizePixel=0
+	if isSubStyle then local ib=Instance.new('Frame',rb) ib.Position=UDim2.fromOffset(INDENT,0) ib.Size=UDim2.fromOffset(2,RH) ib.BackgroundColor3=Color3.fromRGB(38,38,38) ib.BorderSizePixel=0 end
+	local lbl=Instance.new('TextLabel',rb) lbl.Position=UDim2.fromOffset(ind,0) lbl.Size=UDim2.fromOffset(W-80,RH)
+	lbl.BackgroundTransparency=1 lbl.Text='Rainbow' lbl.TextColor3=C_DIM lbl.TextSize=9 lbl.FontFace=FONT_UI lbl.TextXAlignment=Enum.TextXAlignment.Left
+	local tbg=Instance.new('Frame',rb) tbg.Size=UDim2.fromOffset(26,14) tbg.Position=UDim2.fromOffset(W-32,(RH-14)/2) tbg.BackgroundColor3=C_STR tbg.BorderSizePixel=0 mkCorner(tbg,99)
+	local kn=Instance.new('Frame',tbg) kn.Size=UDim2.fromOffset(10,10) kn.Position=UDim2.fromOffset(2,2) kn.BackgroundColor3=Color3.fromRGB(180,180,180) kn.BorderSizePixel=0 mkCorner(kn,99)
+	local conn=nil local st=false
+	local btn=Instance.new('TextButton',rb) btn.Size=UDim2.fromScale(1,1) btn.BackgroundTransparency=1 btn.Text='' btn.ZIndex=5
+	btn.MouseButton1Click:Connect(function()
+		st=not st
+		tweenService:Create(tbg,TI_F,{BackgroundColor3=st and C_TEXT or C_STR}):Play()
+		tweenService:Create(kn,TI_F,{Position=st and UDim2.fromOffset(14,2) or UDim2.fromOffset(2,2),BackgroundColor3=st and C_BG or Color3.fromRGB(180,180,180)}):Play()
+		if st then
+			conn=runService.Heartbeat:Connect(function() local col=Color3.fromHSV((tick()*0.2)%1,0.8,1) swatch.BackgroundColor3=col onChange(col) end)
+		else
+			if conn then conn:Disconnect() conn=nil end
+		end
+	end)
+	return RH
+end
+
 function GuiLib.mkColorPicker(parent,yPos,W,label,defaultCol,onChange,sg)
 	local H=28
 	local row=Instance.new('Frame',parent)
@@ -244,7 +269,8 @@ function GuiLib.mkColorPicker(parent,yPos,W,label,defaultCol,onChange,sg)
 	buildPickerPopup(sg,swatch,defaultCol,onChange)
 	row.MouseEnter:Connect(function() tweenService:Create(row,TI_F,{BackgroundColor3=C_HOVER}):Play() end)
 	row.MouseLeave:Connect(function() tweenService:Create(row,TI_F,{BackgroundColor3=C_PANEL}):Play() end)
-	return H
+	local RH=buildRainbowToggle(parent,yPos+H,W,swatch,onChange,false)
+	return H+RH
 end
 
 function GuiLib.mkSubColorPicker(parent,yPos,W,label,defaultCol,onChange,sg)
@@ -260,7 +286,8 @@ function GuiLib.mkSubColorPicker(parent,yPos,W,label,defaultCol,onChange,sg)
 	swatch.BackgroundColor3=defaultCol swatch.BorderSizePixel=0 swatch.Text='' swatch.AutoButtonColor=false
 	mkCorner(swatch,3) mkStroke(swatch,Color3.fromRGB(55,55,55))
 	buildPickerPopup(sg,swatch,defaultCol,onChange)
-	return H
+	local RH=buildRainbowToggle(parent,yPos+H,W,swatch,onChange,true)
+	return H+RH
 end
 
 function GuiLib.mkMultiSelect(parent,yPos,W,options,defaults,minSelect,onChange)
