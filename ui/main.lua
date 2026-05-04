@@ -493,7 +493,10 @@ function GuiLib.mkConfigSystem(configPath, requiredKeys)
 		end
 		if requiredKeys then
 			for _,key in ipairs(requiredKeys) do
-				if t[key]==nil then pcall(writefile,configPath,'') return end
+				if t[key]==nil then
+					pcall(function() if delfile then delfile(configPath) else writefile(configPath,'') end end)
+					return
+				end
 			end
 		end
 		loaded=t
