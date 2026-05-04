@@ -414,42 +414,13 @@ function GuiLib.mkNotifSystem(sg)
 		hideTimer=task.delay(duration or 3,function() dismiss(f) hideTimer=nil end)
 	end
 
-	local autoSave=false
-
 	function sys.showAction(text, btnText, onConfirm, timeout, iconUrl)
 		if hideTimer then task.cancel(hideTimer) hideTimer=nil end
-		if autoSave then
-			if onConfirm then onConfirm() end
-			sys.showInfo('Config updated',2,iconUrl)
-			return
-		end
 		local f=buildFrame(iconUrl)
 		local lbl=Instance.new('TextLabel',f)
-		lbl.Size=UDim2.fromOffset(NOTIF_W-180,NOTIF_H) lbl.Position=UDim2.fromOffset(34,0)
+		lbl.Size=UDim2.fromOffset(NOTIF_W-100,NOTIF_H) lbl.Position=UDim2.fromOffset(34,0)
 		lbl.BackgroundTransparency=1 lbl.Text=text lbl.TextColor3=C_DIM lbl.TextSize=13
 		lbl.FontFace=FONT_UI lbl.TextXAlignment=Enum.TextXAlignment.Left lbl.ZIndex=1000
-
-		-- Auto Save toggle in notification
-		local atogBg=Instance.new('Frame',f)
-		atogBg.Size=UDim2.fromOffset(28,16) atogBg.Position=UDim2.fromOffset(NOTIF_W-152,(NOTIF_H-16)/2)
-		atogBg.BackgroundColor3=autoSave and C_TEXT or C_STR atogBg.BorderSizePixel=0 atogBg.ZIndex=1000 mkCorner(atogBg,99)
-		local atogK=Instance.new('Frame',atogBg) atogK.Size=UDim2.fromOffset(12,12)
-		atogK.Position=autoSave and UDim2.fromOffset(14,2) or UDim2.fromOffset(2,2)
-		atogK.BackgroundColor3=autoSave and C_BG or Color3.fromRGB(160,160,160)
-		atogK.BorderSizePixel=0 atogK.ZIndex=1001 mkCorner(atogK,99)
-		local atogLbl=Instance.new('TextLabel',f)
-		atogLbl.Size=UDim2.fromOffset(60,NOTIF_H) atogLbl.Position=UDim2.fromOffset(NOTIF_W-122,0)
-		atogLbl.BackgroundTransparency=1 atogLbl.Text='Auto Save' atogLbl.TextColor3=C_DIM
-		atogLbl.TextSize=10 atogLbl.FontFace=FONT_UI atogLbl.ZIndex=1000
-		local atogBtn=Instance.new('TextButton',f) atogBtn.Size=UDim2.fromOffset(90,NOTIF_H)
-		atogBtn.Position=UDim2.fromOffset(NOTIF_W-152,0) atogBtn.BackgroundTransparency=1
-		atogBtn.Text='' atogBtn.ZIndex=1002
-		atogBtn.MouseButton1Click:Connect(function()
-			autoSave=not autoSave
-			atogBg.BackgroundColor3=autoSave and C_TEXT or C_STR
-			atogK.Position=autoSave and UDim2.fromOffset(14,2) or UDim2.fromOffset(2,2)
-			atogK.BackgroundColor3=autoSave and C_BG or Color3.fromRGB(160,160,160)
-		end)
 
 		local btn=Instance.new('TextButton',f)
 		btn.Size=UDim2.fromOffset(72,32) btn.Position=UDim2.fromOffset(NOTIF_W-80,(NOTIF_H-32)/2)
