@@ -247,7 +247,11 @@ local function buildRainbowToggle(parent,yPos,W,swatch,onChange,isSubStyle)
 		tweenService:Create(tbg,TI_F,{BackgroundColor3=st and C_TEXT or C_STR}):Play()
 		tweenService:Create(kn,TI_F,{Position=st and UDim2.fromOffset(14,2) or UDim2.fromOffset(2,2),BackgroundColor3=st and C_BG or Color3.fromRGB(180,180,180)}):Play()
 		if st then
-			conn=runService.Heartbeat:Connect(function() local col=Color3.fromHSV((tick()*0.2)%1,0.8,1) swatch.BackgroundColor3=col onChange(col) end)
+			conn=runService.Heartbeat:Connect(function()
+				GuiLib.rainbowActive=true
+				local col=Color3.fromHSV((tick()*0.2)%1,0.8,1) swatch.BackgroundColor3=col onChange(col)
+				GuiLib.rainbowActive=false
+			end)
 		else
 			if conn then conn:Disconnect() conn=nil end
 		end
