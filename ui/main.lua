@@ -85,21 +85,24 @@ function GuiLib.mkToggleRow(parent,label,yPos,W,default,onToggle)
 	knob.Position=default and UDim2.fromOffset(16,2) or UDim2.fromOffset(2,2)
 	knob.BackgroundColor3=default and C_BG or Color3.fromRGB(180,180,180) knob.BorderSizePixel=0 mkCorner(knob,99)
 	local state=default
+	local function setState(v,silent)
+		state=v
+		togBg.BackgroundColor3=v and C_TEXT or C_STR
+		glow.Color=v and C_WHITE or C_STR
+		knob.Position=v and UDim2.fromOffset(16,2) or UDim2.fromOffset(2,2)
+		knob.BackgroundColor3=v and C_BG or Color3.fromRGB(180,180,180)
+		bar.BackgroundColor3=v and C_TEXT or C_STR
+		lbl.TextColor3=v and C_TEXT or C_DIM
+		if not silent then onToggle(v) end
+	end
 	local btn=Instance.new('TextButton',row) btn.Size=UDim2.fromScale(1,1)
 	btn.BackgroundTransparency=1 btn.Text='' btn.ZIndex=5
 	btn.MouseButton1Click:Connect(function()
-		state=not state
-		tweenService:Create(togBg,TI_F,{BackgroundColor3=state and C_TEXT or C_STR}):Play()
-		tweenService:Create(glow,TI_F,{Color=state and C_WHITE or C_STR}):Play()
-		tweenService:Create(knob,TI_F,{Position=state and UDim2.fromOffset(16,2) or UDim2.fromOffset(2,2),
-			BackgroundColor3=state and C_BG or Color3.fromRGB(180,180,180)}):Play()
-		tweenService:Create(bar,TI_F,{BackgroundColor3=state and C_TEXT or C_STR}):Play()
-		tweenService:Create(lbl,TI_F,{TextColor3=state and C_TEXT or C_DIM}):Play()
-		onToggle(state)
+		setState(not state)
 	end)
 	row.MouseEnter:Connect(function() tweenService:Create(row,TI_F,{BackgroundColor3=C_HOVER}):Play() end)
 	row.MouseLeave:Connect(function() tweenService:Create(row,TI_F,{BackgroundColor3=C_PANEL}):Play() end)
-	return H
+	return H,setState
 end
 
 local function buildSlider(row,bar,W,minV,maxV,defV,suffix,onChange,isSubStyle)
@@ -116,32 +119,32 @@ local function buildSlider(row,bar,W,minV,maxV,defV,suffix,onChange,isSubStyle)
 	fill.Size=UDim2.fromScale((defV-minV)/(maxV-minV),1)
 	fill.BackgroundColor3=isSubStyle and Color3.fromRGB(75,75,75) or C_TEXT
 	fill.BorderSizePixel=0 mkCorner(fill,2)
-	if not isSubStyle then
-		Instance.new('UIGradient',fill).Color=ColorSequence.new(Color3.fromRGB(140,140,140),C_WHITE)
-	end
+	if not isSubStyle then Instance.new('UIGradient',fill).Color=ColorSequence.new(Color3.fromRGB(140,140,140),C_WHITE) end
+	local kOff=isSubStyle and -5 or -6
 	local knob=Instance.new('Frame',trackBg)
 	knob.Size=UDim2.fromOffset(isSubStyle and 10 or 13,isSubStyle and 10 or 13)
-	local kOff=isSubStyle and -5 or -6
 	knob.Position=UDim2.new((defV-minV)/(maxV-minV),kOff,0.5,kOff)
 	knob.BackgroundColor3=Color3.fromRGB(isSubStyle and 175 or 230,isSubStyle and 175 or 230,isSubStyle and 175 or 230)
-	knob.BorderSizePixel=0 mkCorner(knob,99)
-	mkStroke(knob,Color3.fromRGB(200,200,200))
+	knob.BorderSizePixel=0 mkCorner(knob,99) mkStroke(knob,Color3.fromRGB(200,200,200))
 	local dragging=false
-	local function update(absX)
-		local rel=math.clamp(absX-trackBg.AbsolutePosition.X,0,trackBg.AbsoluteSize.X)
-		local pct=rel/trackBg.AbsoluteSize.X
-		local val=math.round(minV+pct*(maxV-minV))
+	local function setValue(val,silent)
+		val=math.clamp(math.round(val),minV,maxV)
 		local fp=(val-minV)/(maxV-minV)
 		fill.Size=UDim2.fromScale(fp,1)
 		knob.Position=UDim2.new(fp,kOff,0.5,kOff)
 		valLbl.Text=tostring(val)..(suffix or '')
-		onChange(val)
+		if not silent then onChange(val) end
+	end
+	local function update(absX)
+		local pct=math.clamp((absX-trackBg.AbsolutePosition.X)/trackBg.AbsoluteSize.X,0,1)
+		setValue(math.round(minV+pct*(maxV-minV)))
 	end
 	trackBg.InputBegan:Connect(function(i) if i.UserInputType~=Enum.UserInputType.MouseButton1 then return end dragging=true update(i.Position.X) end)
 	trackBg.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
 	knob.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true end end)
 	knob.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
 	inputService.InputChanged:Connect(function(i) if dragging and i.UserInputType==Enum.UserInputType.MouseMovement then update(i.Position.X) end end)
+	return setValue
 end
 
 function GuiLib.mkSliderRow(parent,label,yPos,W,minV,maxV,defV,suffix,onChange)
@@ -151,10 +154,10 @@ function GuiLib.mkSliderRow(parent,label,yPos,W,minV,maxV,defV,suffix,onChange)
 	row.BackgroundColor3=C_PANEL row.BorderSizePixel=0
 	local bar=Instance.new('Frame',row) bar.Size=UDim2.fromOffset(2,H) bar.BackgroundColor3=C_TEXT bar.BorderSizePixel=0
 	mkLbl(row,label,16,4,W-80,14,11,FONT_UI,C_DIM)
-	buildSlider(row,bar,W,minV,maxV,defV,suffix,onChange,false)
+	local setValue=buildSlider(row,bar,W,minV,maxV,defV,suffix,onChange,false)
 	row.MouseEnter:Connect(function() tweenService:Create(row,TI_F,{BackgroundColor3=C_HOVER}):Play() end)
 	row.MouseLeave:Connect(function() tweenService:Create(row,TI_F,{BackgroundColor3=C_PANEL}):Play() end)
-	return H
+	return H,setValue
 end
 
 function GuiLib.mkSubSlider(parent,label,yPos,W,minV,maxV,defV,suffix,onChange)
@@ -165,8 +168,8 @@ function GuiLib.mkSubSlider(parent,label,yPos,W,minV,maxV,defV,suffix,onChange)
 	local ab=Instance.new('Frame',row) ab.Size=UDim2.fromOffset(2,H) ab.BackgroundColor3=Color3.fromRGB(50,50,50) ab.BorderSizePixel=0
 	local ib=Instance.new('Frame',row) ib.Position=UDim2.fromOffset(INDENT,0) ib.Size=UDim2.fromOffset(2,H) ib.BackgroundColor3=Color3.fromRGB(38,38,38) ib.BorderSizePixel=0
 	mkLbl(row,label,INDENT+8,2,W-80,14,10,FONT_UI,C_DIM)
-	buildSlider(row,ab,W,minV,maxV,defV,suffix,onChange,true)
-	return H
+	local setValue=buildSlider(row,ab,W,minV,maxV,defV,suffix,onChange,true)
+	return H,setValue
 end
 
 local activePickerClose = nil
@@ -230,7 +233,7 @@ local function buildPickerPopup(sg,swatch,defaultCol,onChange)
 	end)
 end
 
-local function buildRainbowToggle(parent,yPos,W,swatch,onChange,isSubStyle)
+local function buildRainbowToggle(parent,yPos,W,swatch,onChange,isSubStyle,defaultState)
 	local RH=20 local ind=isSubStyle and INDENT+8 or 16
 	local rb=Instance.new('Frame',parent) rb.Position=UDim2.fromOffset(0,yPos) rb.Size=UDim2.fromOffset(W,RH)
 	rb.BackgroundColor3=C_SUB rb.BorderSizePixel=0
@@ -241,25 +244,34 @@ local function buildRainbowToggle(parent,yPos,W,swatch,onChange,isSubStyle)
 	local tbg=Instance.new('Frame',rb) tbg.Size=UDim2.fromOffset(26,14) tbg.Position=UDim2.fromOffset(W-32,(RH-14)/2) tbg.BackgroundColor3=C_STR tbg.BorderSizePixel=0 mkCorner(tbg,99)
 	local kn=Instance.new('Frame',tbg) kn.Size=UDim2.fromOffset(10,10) kn.Position=UDim2.fromOffset(2,2) kn.BackgroundColor3=Color3.fromRGB(180,180,180) kn.BorderSizePixel=0 mkCorner(kn,99)
 	local conn=nil local st=false
-	local btn=Instance.new('TextButton',rb) btn.Size=UDim2.fromScale(1,1) btn.BackgroundTransparency=1 btn.Text='' btn.ZIndex=5
-	btn.MouseButton1Click:Connect(function()
-		st=not st
-		tweenService:Create(tbg,TI_F,{BackgroundColor3=st and C_TEXT or C_STR}):Play()
-		tweenService:Create(kn,TI_F,{Position=st and UDim2.fromOffset(14,2) or UDim2.fromOffset(2,2),BackgroundColor3=st and C_BG or Color3.fromRGB(180,180,180)}):Play()
+	local function setState(v)
+		st=v
+		tbg.BackgroundColor3=st and C_TEXT or C_STR
+		kn.Position=st and UDim2.fromOffset(14,2) or UDim2.fromOffset(2,2)
+		kn.BackgroundColor3=st and C_BG or Color3.fromRGB(180,180,180)
 		if st then
-			conn=runService.Heartbeat:Connect(function()
-				GuiLib.rainbowActive=true
-				local col=Color3.fromHSV((tick()*0.2)%1,0.8,1) swatch.BackgroundColor3=col onChange(col)
-				GuiLib.rainbowActive=false
-			end)
+			if not conn then
+				conn=runService.Heartbeat:Connect(function()
+					GuiLib.rainbowActive=true
+					local col=Color3.fromHSV((tick()*0.2)%1,0.8,1) swatch.BackgroundColor3=col onChange(col)
+					GuiLib.rainbowActive=false
+				end)
+			end
 		else
 			if conn then conn:Disconnect() conn=nil end
 		end
+	end
+	local btn=Instance.new('TextButton',rb) btn.Size=UDim2.fromScale(1,1) btn.BackgroundTransparency=1 btn.Text='' btn.ZIndex=5
+	btn.MouseButton1Click:Connect(function()
+		tweenService:Create(tbg,TI_F,{BackgroundColor3=not st and C_TEXT or C_STR}):Play()
+		tweenService:Create(kn,TI_F,{Position=not st and UDim2.fromOffset(14,2) or UDim2.fromOffset(2,2),BackgroundColor3=not st and C_BG or Color3.fromRGB(180,180,180)}):Play()
+		setState(not st)
 	end)
-	return RH
+	if defaultState then setState(true) end
+	return RH,setState
 end
 
-function GuiLib.mkColorPicker(parent,yPos,W,label,defaultCol,onChange,sg)
+function GuiLib.mkColorPicker(parent,yPos,W,label,defaultCol,onChange,sg,defaultRainbow)
 	local H=28
 	local row=Instance.new('Frame',parent)
 	row.Position=UDim2.fromOffset(0,yPos) row.Size=UDim2.fromOffset(W,H)
@@ -273,11 +285,11 @@ function GuiLib.mkColorPicker(parent,yPos,W,label,defaultCol,onChange,sg)
 	buildPickerPopup(sg,swatch,defaultCol,onChange)
 	row.MouseEnter:Connect(function() tweenService:Create(row,TI_F,{BackgroundColor3=C_HOVER}):Play() end)
 	row.MouseLeave:Connect(function() tweenService:Create(row,TI_F,{BackgroundColor3=C_PANEL}):Play() end)
-	local RH=buildRainbowToggle(parent,yPos+H,W,swatch,onChange,false)
-	return H+RH
+	local RH,setState=buildRainbowToggle(parent,yPos+H,W,swatch,onChange,false,defaultRainbow)
+	return H+RH,setState
 end
 
-function GuiLib.mkSubColorPicker(parent,yPos,W,label,defaultCol,onChange,sg)
+function GuiLib.mkSubColorPicker(parent,yPos,W,label,defaultCol,onChange,sg,defaultRainbow)
 	local H=26
 	local row=Instance.new('Frame',parent)
 	row.Position=UDim2.fromOffset(0,yPos) row.Size=UDim2.fromOffset(W,H)
@@ -290,8 +302,8 @@ function GuiLib.mkSubColorPicker(parent,yPos,W,label,defaultCol,onChange,sg)
 	swatch.BackgroundColor3=defaultCol swatch.BorderSizePixel=0 swatch.Text='' swatch.AutoButtonColor=false
 	mkCorner(swatch,3) mkStroke(swatch,Color3.fromRGB(55,55,55))
 	buildPickerPopup(sg,swatch,defaultCol,onChange)
-	local RH=buildRainbowToggle(parent,yPos+H,W,swatch,onChange,true)
-	return H+RH
+	local RH,setState=buildRainbowToggle(parent,yPos+H,W,swatch,onChange,true,defaultRainbow)
+	return H+RH,setState
 end
 
 function GuiLib.mkMultiSelect(parent,yPos,W,options,defaults,minSelect,onChange)
@@ -487,17 +499,15 @@ function GuiLib.mkConfigSystem(configPath, requiredKeys)
 		local ok,raw=pcall(readfile,configPath)
 		if not ok or not raw or raw=='' then return end
 		local t={}
-		for line in (raw..'\n'):gmatch('([^\n]*)\n') do
-			local k,v=line:match('^([^=]+)=(.+)$')
+		local sep=raw:find('|') and '|' or '\n'
+		for seg in (raw..sep):gmatch('([^'..sep..']+)'..sep) do
+			local k,v=seg:match('^([^=]+)=(.+)$')
 			if k and v then t[k]=v end
 		end
 		if requiredKeys then
-			for _,key in ipairs(requiredKeys) do
-				if t[key]==nil then
-					pcall(function() if delfile then delfile(configPath) else writefile(configPath,'') end end)
-					return
-				end
-			end
+			local found=0
+			for _,key in ipairs(requiredKeys) do if t[key]~=nil then found=found+1 end end
+			if found==0 then pcall(function() if delfile then delfile(configPath) else writefile(configPath,'') end end) return end
 		end
 		loaded=t
 	end
@@ -514,6 +524,7 @@ function GuiLib.mkConfigSystem(configPath, requiredKeys)
 	function cfg.getNum(k,d) return tonumber(cfg.get(k,tostring(d))) or d end
 	function cfg.getColor(k,d) return strToColor(cfg.get(k,colorToStr(d or Color3.new(1,1,1)))) end
 	function cfg.getStr(k,d) return cfg.get(k,d) end
+	function cfg._forceLoad(t) loaded=t end
 	function cfg.hasData() return loaded~=nil end
 
 	cfg.load()
