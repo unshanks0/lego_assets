@@ -622,4 +622,51 @@ function GuiLib.mkDropdown(parent, yPos, W, label, options, default, onChange)
 end
 
 
+
+function GuiLib.mkRestartPopup(message, onRestart)
+	local sg=Instance.new('ScreenGui')
+	sg.Name='RestartPopupGui' sg.DisplayOrder=99999999
+	sg.ZIndexBehavior=Enum.ZIndexBehavior.Global
+	sg.IgnoreGuiInset=true sg.ResetOnSpawn=false
+	if setthreadidentity then setthreadidentity(8) end
+	sg.Parent=coreGui
+
+	local overlay=Instance.new('Frame',sg)
+	overlay.Size=UDim2.fromScale(1,1)
+	overlay.BackgroundColor3=Color3.new(0,0,0)
+	overlay.BackgroundTransparency=0.45
+	overlay.BorderSizePixel=0
+
+	local card=Instance.new('Frame',overlay)
+	card.Size=UDim2.fromOffset(300,140)
+	card.AnchorPoint=Vector2.new(0.5,0.5)
+	card.Position=UDim2.fromScale(0.5,0.5)
+	card.BackgroundColor3=C_BG card.BorderSizePixel=0
+	mkCorner(card,12) mkStroke(card,C_STR)
+
+	local lbl=Instance.new('TextLabel',card)
+	lbl.Size=UDim2.fromOffset(268,72)
+	lbl.Position=UDim2.fromOffset(16,14)
+	lbl.BackgroundTransparency=1
+	lbl.Text=message or 'Config changed, restart now!'
+	lbl.TextColor3=C_TEXT lbl.TextSize=15
+	lbl.FontFace=FONT_H lbl.TextWrapped=true
+	lbl.TextXAlignment=Enum.TextXAlignment.Center
+	lbl.TextYAlignment=Enum.TextYAlignment.Center
+
+	local btn=Instance.new('TextButton',card)
+	btn.Size=UDim2.fromOffset(268,36)
+	btn.Position=UDim2.fromOffset(16,96)
+	btn.BackgroundColor3=C_TEXT btn.BorderSizePixel=0
+	btn.Text='Restart' btn.TextColor3=C_BG
+	btn.TextSize=13 btn.FontFace=FONT_UB
+	btn.AutoButtonColor=false mkCorner(btn,7)
+	btn.MouseEnter:Connect(function() tweenService:Create(btn,TI_F,{BackgroundColor3=C_WHITE}):Play() end)
+	btn.MouseLeave:Connect(function() tweenService:Create(btn,TI_F,{BackgroundColor3=C_TEXT}):Play() end)
+	btn.MouseButton1Click:Connect(function()
+		sg:Destroy()
+		if onRestart then onRestart() end
+	end)
+end
+
 return GuiLib
