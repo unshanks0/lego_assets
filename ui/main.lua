@@ -625,23 +625,24 @@ end
 
 function GuiLib.mkRestartPopup(message, onRestart)
 	local sg=Instance.new('ScreenGui')
-	sg.Name='RestartPopupGui' sg.DisplayOrder=99999999
+	sg.Name='RestartPopupGui' sg.DisplayOrder=2147483647
 	sg.ZIndexBehavior=Enum.ZIndexBehavior.Global
-	sg.IgnoreGuiInset=true sg.ResetOnSpawn=false
-	if setthreadidentity then setthreadidentity(8) end
-	sg.Parent=coreGui
+	sg.IgnoreGuiInset=true sg.OnTopOfCoreBlur=true sg.ResetOnSpawn=false
+	if threadfix then if setthreadidentity then setthreadidentity(8) end sg.Parent=coreGui
+	else sg.Parent=lplr.PlayerGui end
 
-	local overlay=Instance.new('Frame',sg)
-	overlay.Size=UDim2.fromScale(1,1)
-	overlay.BackgroundColor3=Color3.new(0,0,0)
-	overlay.BackgroundTransparency=0.45
-	overlay.BorderSizePixel=0
+	-- full-screen blocker so nothing behind the popup is clickable
+	local blocker=Instance.new('TextButton',sg)
+	blocker.Size=UDim2.fromScale(1,1) blocker.Position=UDim2.fromScale(0,0)
+	blocker.BackgroundColor3=Color3.new(0,0,0) blocker.BackgroundTransparency=0.45
+	blocker.BorderSizePixel=0 blocker.Text='' blocker.AutoButtonColor=false
+	blocker.ZIndex=1
 
-	local card=Instance.new('Frame',overlay)
-	card.Size=UDim2.fromOffset(300,140)
+	local card=Instance.new('Frame',sg)
+	card.Size=UDim2.fromOffset(300,152)
 	card.AnchorPoint=Vector2.new(0.5,0.5)
 	card.Position=UDim2.fromScale(0.5,0.5)
-	card.BackgroundColor3=C_BG card.BorderSizePixel=0
+	card.BackgroundColor3=C_BG card.BorderSizePixel=0 card.ZIndex=2
 	mkCorner(card,12) mkStroke(card,C_STR)
 
 	local lbl=Instance.new('TextLabel',card)
@@ -649,23 +650,38 @@ function GuiLib.mkRestartPopup(message, onRestart)
 	lbl.Position=UDim2.fromOffset(16,14)
 	lbl.BackgroundTransparency=1
 	lbl.Text=message or 'Config changed, restart now!'
-	lbl.TextColor3=C_TEXT lbl.TextSize=15
+	lbl.TextColor3=C_TEXT lbl.TextSize=15 lbl.ZIndex=3
 	lbl.FontFace=FONT_H lbl.TextWrapped=true
 	lbl.TextXAlignment=Enum.TextXAlignment.Center
 	lbl.TextYAlignment=Enum.TextYAlignment.Center
 
-	local btn=Instance.new('TextButton',card)
-	btn.Size=UDim2.fromOffset(268,36)
-	btn.Position=UDim2.fromOffset(16,96)
-	btn.BackgroundColor3=C_TEXT btn.BorderSizePixel=0
-	btn.Text='Restart' btn.TextColor3=C_BG
-	btn.TextSize=13 btn.FontFace=FONT_UB
-	btn.AutoButtonColor=false mkCorner(btn,7)
-	btn.MouseEnter:Connect(function() tweenService:Create(btn,TI_F,{BackgroundColor3=C_WHITE}):Play() end)
-	btn.MouseLeave:Connect(function() tweenService:Create(btn,TI_F,{BackgroundColor3=C_TEXT}):Play() end)
-	btn.MouseButton1Click:Connect(function()
+	local BW=(268-6)/2
+
+	local btnRestart=Instance.new('TextButton',card)
+	btnRestart.Size=UDim2.fromOffset(BW,36)
+	btnRestart.Position=UDim2.fromOffset(16,100)
+	btnRestart.BackgroundColor3=C_TEXT btnRestart.BorderSizePixel=0
+	btnRestart.Text='Restart' btnRestart.TextColor3=C_BG
+	btnRestart.TextSize=13 btnRestart.FontFace=FONT_UB
+	btnRestart.AutoButtonColor=false btnRestart.ZIndex=3 mkCorner(btnRestart,7)
+	btnRestart.MouseEnter:Connect(function() tweenService:Create(btnRestart,TI_F,{BackgroundColor3=C_WHITE}):Play() end)
+	btnRestart.MouseLeave:Connect(function() tweenService:Create(btnRestart,TI_F,{BackgroundColor3=C_TEXT}):Play() end)
+	btnRestart.MouseButton1Click:Connect(function()
 		sg:Destroy()
 		if onRestart then onRestart() end
+	end)
+
+	local btnCancel=Instance.new('TextButton',card)
+	btnCancel.Size=UDim2.fromOffset(BW,36)
+	btnCancel.Position=UDim2.fromOffset(16+BW+6,100)
+	btnCancel.BackgroundColor3=Color3.fromRGB(28,28,28) btnCancel.BorderSizePixel=0
+	btnCancel.Text='Cancel' btnCancel.TextColor3=C_DIM
+	btnCancel.TextSize=13 btnCancel.FontFace=FONT_UB
+	btnCancel.AutoButtonColor=false btnCancel.ZIndex=3 mkCorner(btnCancel,7) mkStroke(btnCancel,C_STR)
+	btnCancel.MouseEnter:Connect(function() tweenService:Create(btnCancel,TI_F,{BackgroundColor3=Color3.fromRGB(38,38,38)}):Play() end)
+	btnCancel.MouseLeave:Connect(function() tweenService:Create(btnCancel,TI_F,{BackgroundColor3=Color3.fromRGB(28,28,28)}):Play() end)
+	btnCancel.MouseButton1Click:Connect(function()
+		sg:Destroy()
 	end)
 end
 
