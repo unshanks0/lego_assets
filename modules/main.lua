@@ -55,13 +55,11 @@ return function(ctx)
 			return self[ind]
 		end})
 	}
-	entitylib.isTeammate=function(ent)
-		if ent.NPC then return false end
-		local root=ent.HumanoidRootPart or (ent.Character and ent.Character:FindFirstChild('HumanoidRootPart'))
-		if root and root:FindFirstChild('TeammateLabel') then return true end
-		return false
+	entitylib.targetCheck=function(ent)
+		if ent.NPC then return true end
+		if ent.HumanoidRootPart and ent.HumanoidRootPart:FindFirstChild('TeammateLabel') then return false end
+		return true
 	end
-	entitylib.targetCheck=function(ent) return not entitylib.isTeammate(ent) end
 	entitylib.getUpdateConnections=function(ent) return{ent.Humanoid:GetPropertyChangedSignal('Health'),ent.Humanoid:GetPropertyChangedSignal('MaxHealth')} end
 	entitylib.isVulnerable=function(ent) return ent.Health>0 and not ent.Character.FindFirstChildWhichIsA(ent.Character,'ForceField') end
 	entitylib.IgnoreObject=RaycastParams.new()
@@ -80,12 +78,12 @@ return function(ctx)
 		if entitylib.isAlive then
 			local mouse=s.MouseOrigin or getMousePos()
 			local t={}
-			local localRoot=entitylib.character and entitylib.character.RootPart
 			for _,v in entitylib.List do
 				if not s.Players and v.Player then continue end
 				if not s.NPCs and v.NPC then continue end
 				if not v.Targetable then continue end
-				if localRoot and (v.RootPart.Position-localRoot.Position).Magnitude>650 then continue end
+				local rootPos=v.RootPart.Position
+				if (rootPos-lplr.Character.HumanoidRootPart.Position).Magnitude>650 then continue end
 				local pos,vis=gameCamera.WorldToViewportPoint(gameCamera,v[s.Part].Position)
 				if not vis then continue end
 				local mag=(mouse-Vector2.new(pos.x,pos.y)).Magnitude
@@ -120,7 +118,7 @@ return function(ctx)
 						table.insert(ent.Connections,v:Connect(function() ent.Health=hum.Health ent.MaxHealth=hum.MaxHealth end))
 					end
 					table.insert(ent.Connections,root.ChildAdded:Connect(function(c) if c.Name=='TeammateLabel' then ent.Targetable=false end end))
-					table.insert(ent.Connections,root.ChildRemoved:Connect(function(c) if c.Name=='TeammateLabel' then ent.Targetable=true end end))
+					table.insert(ent.Connections,root.ChildRemoved:Connect(function(c) if c.Name=='TeammateLabel' then ent.Targetable=entitylib.targetCheck(ent) end end))
 					table.insert(entitylib.List,ent)
 					entitylib.Events.EntityAdded:Fire(ent)
 				end
