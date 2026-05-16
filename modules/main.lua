@@ -1,11 +1,3 @@
--- modules.lua
--- Loaded via loadstring by main.lua (same pattern as lego/ui/main.lua).
--- Returns a constructor function; main.lua calls it with a ctx table.
--- ctx fields: cfg, GuiLib, Icons, playersService, inputService, tweenService,
---             runService, coreGui, lplr, EXIT_CONNS, EXIT_THREADS, R, mainVars
--- R (mutable shared refs): R.sgAim, R.sgRend, R.notif, R.getCamera()
--- mainVars: {configName, legoUsername, mainBannerUrl, mainParagraph, mainHudImgUrl}
-
 return function(ctx)
 	local cfg            = ctx.cfg
 	local GuiLib         = ctx.GuiLib
@@ -20,8 +12,6 @@ return function(ctx)
 	local _EXIT_THREADS  = ctx.EXIT_THREADS
 	local R              = ctx.R
 	local mainVars       = ctx.mainVars
-
-	-- GuiLib aliases
 	local mkSG     = GuiLib.mkScreenGui
 	local C_BG     = GuiLib.C_BG
 	local C_PANEL  = GuiLib.C_PANEL
@@ -38,14 +28,10 @@ return function(ctx)
 	local mkCorner = GuiLib.mkCorner
 	local mkStroke = GuiLib.mkStroke
 	local mkLbl    = GuiLib.mkLbl
-
-	-- Local gameCamera (kept in sync with main)
 	local gameCamera = R.getCamera()
 	_EXIT_CONNS[#_EXIT_CONNS+1] = workspace:GetPropertyChangedSignal('CurrentCamera'):Connect(function()
 		gameCamera = workspace.CurrentCamera or workspace:FindFirstChildWhichIsA('Camera')
 	end)
-
-	-- Helpers
 	local function _sc(s) local r,g,b=s:match("^(%d+),(%d+),(%d+)$") if r then return Color3.fromRGB(tonumber(r),tonumber(g),tonumber(b)) end return Color3.new(1,1,1) end
 	local function strToColor(s) local r,g,b=s:match('^(%d+),(%d+),(%d+)$') if r then return Color3.fromRGB(tonumber(r),tonumber(g),tonumber(b)) end return Color3.new(1,1,1) end
 	local function colorToStr(c3) return math.round(c3.R*255)..','..math.round(c3.G*255)..','..math.round(c3.B*255) end
@@ -56,10 +42,8 @@ return function(ctx)
 	end
 	local function getMousePos()
 		if inputService.TouchEnabled then return gameCamera.ViewportSize/2 end
-		return inputService:GetMouseLocation()
+		return inputService.GetMouseLocation(inputService)
 	end
-
-	-- ── entitylib ─────────────────────────────────────────────────
 	local entitylib = {
 		isAlive=false,character={},List={},Connections={},
 		PlayerConnections={},EntityThreads={},Running=false,
@@ -79,7 +63,7 @@ return function(ctx)
 	end
 	entitylib.targetCheck=function(ent) return not entitylib.isTeammate(ent) end
 	entitylib.getUpdateConnections=function(ent) return{ent.Humanoid:GetPropertyChangedSignal('Health'),ent.Humanoid:GetPropertyChangedSignal('MaxHealth')} end
-	entitylib.isVulnerable=function(ent) return ent.Health>0 and not ent.Character:FindFirstChildWhichIsA('ForceField') end
+	entitylib.isVulnerable=function(ent) return ent.Health>0 and not ent.Character.FindFirstChildWhichIsA(ent.Character,'ForceField') end
 	entitylib.IgnoreObject=RaycastParams.new()
 	entitylib.IgnoreObject.RespectCanCollide=true
 	entitylib.Wallcheck=function(origin,position,ignoreobject)
@@ -90,7 +74,7 @@ return function(ctx)
 			ignoreobject=entitylib.IgnoreObject
 			ignoreobject.FilterDescendantsInstances=list
 		end
-		return workspace:Raycast(origin,(position-origin),ignoreobject)
+		return workspace.Raycast(workspace,origin,(position-origin),ignoreobject)
 	end
 	entitylib.EntityMouse=function(s)
 		if entitylib.isAlive then
@@ -102,7 +86,7 @@ return function(ctx)
 				if not s.NPCs and v.NPC then continue end
 				if not v.Targetable then continue end
 				if localRoot and (v.RootPart.Position-localRoot.Position).Magnitude>650 then continue end
-				local pos,vis=gameCamera:WorldToViewportPoint(v[s.Part].Position)
+				local pos,vis=gameCamera.WorldToViewportPoint(gameCamera,v[s.Part].Position)
 				if not vis then continue end
 				local mag=(mouse-Vector2.new(pos.x,pos.y)).Magnitude
 				if mag>s.Range then continue end
@@ -190,8 +174,6 @@ return function(ctx)
 		for _,v in entitylib.EntityThreads do task.cancel(v) end
 		table.clear(entitylib.PlayerConnections) table.clear(entitylib.EntityThreads) table.clear(entitylib.Connections) table.clear(cl) entitylib.Running=false
 	end
-
-	-- ── State variables ───────────────────────────────────────────
 	local kdaEnabled    = cfg.getBool('kdaEnabled',true)
 	local hudLogoEnabled= cfg.getBool('hudLogoEnabled',true)
 	local hudLogoScale  = cfg.getNum('hudLogoScale',60)
@@ -282,8 +264,6 @@ return function(ctx)
 	local rainbowHue=0
 	local UISetters={}
 	local tagGui=mkSG('RenderTagGui',9999996)
-
-	-- ── Aim systems ───────────────────────────────────────────────
 	local moveConst=Vector2.new(1,0.77)*math.rad(0.5)
 	local function wrapAngle(n) n=n%math.pi n-=n>=(math.pi/2) and math.pi or 0 n+=n<-(math.pi/2) and math.pi or 0 return n end
 	local function makeFovCircle(radius,col) local c=Drawing.new('Circle') c.Visible=false c.Filled=false c.Color=col or Color3.new(1,1,1) c.Thickness=1 c.Radius=radius c.NumSides=1000 c.Transparency=1 return c end
@@ -331,8 +311,8 @@ return function(ctx)
 	end
 	local oldnamecall=nil
 	local function faGetTarget(origin)
-		if rand:NextNumber(0,100)>FA_HitChance.Value then return end
-		local part=rand:NextNumber(0,100)<FA_HeadChance.Value and 'Head' or 'RootPart'
+		if rand.NextNumber(rand,0,100)>FA_HitChance.Value then return end
+		local part=rand.NextNumber(rand,0,100)<FA_HeadChance.Value and 'Head' or 'RootPart'
 		local ent=entitylib.EntityMouse({Range=FA_Range.Value,Part=part,Origin=origin,Players=FA_Target.Players.Enabled,NPCs=FA_Target.NPCs.Enabled})
 		return ent,ent and ent[part],origin
 	end
@@ -354,8 +334,6 @@ return function(ctx)
 		end)
 	end
 	local function faUnhook() if oldnamecall then hookmetamethod(game,'__namecall',oldnamecall) oldnamecall=nil end end
-
-	-- ── ESP systems ───────────────────────────────────────────────
 	local applySkelColor,applyBox2dColor,applyBox3dColor,applyTracerColor
 	local applyHeadDotColor,applyHeadDotSize,applyHeadDotTrans,applyTextStyle
 	local skelAdd,skelRemove,skelUpdate,box2dAdd,box2dRemove,box2dUpdate
@@ -528,7 +506,6 @@ return function(ctx)
 			if enabled then for _,ent in entitylib.List do addFn[name](ent) end else for ent in ref[name] do remFn[name](ent) end end
 		end
 	end)()
-
 	local _espRenderConn=runService.RenderStepped:Connect(function()
 		if skelEnabled then skelUpdate() end if box2dEnabled then box2dUpdate() end if box3dEnabled then box3dUpdate() end
 		if tagEnabled then tagUpdate() end if weaponEnabled then weaponUpdate() end if tracerEnabled then tracerUpdate() end
@@ -547,8 +524,6 @@ return function(ctx)
 			if weaponEnabled then setESPFeature('weapon',true) end if tracerEnabled then setESPFeature('tracer',true) end
 		end)
 	end
-
-	-- ── Config functions ──────────────────────────────────────────
 	local REQUIRED_KEYS={'faEnabled','maEnabled','skelEnabled','box2dEnabled','txtEnabled'}
 	local function isConfigBroken(raw)
 		if not raw or raw=='' then return true end
@@ -613,8 +588,6 @@ return function(ctx)
 		setESPFeature('tag',tagEnabled) setESPFeature('weapon',weaponEnabled) setESPFeature('tracer',tracerEnabled)
 		if fovRing then fovRing.Color=faFovColor end if maFovRing then maFovRing.Color=maFovColor end
 	end
-	-- Direct version: reads straight from a raw key-value table, no cfg middleman.
-	-- Used when switching configs so there is zero chance of stale data.
 	local function applyConfigTable(t)
 		local function b(k,d) local v=t[k] if v==nil then return d end return v=='true' end
 		local function n(k,d) return tonumber(t[k]) or d end
@@ -646,6 +619,9 @@ return function(ctx)
 		setESPFeature('skeleton',skelEnabled) setESPFeature('box2d',box2dEnabled) setESPFeature('box3d',box3dEnabled)
 		setESPFeature('tag',tagEnabled) setESPFeature('weapon',weaponEnabled) setESPFeature('tracer',tracerEnabled)
 		if fovRing then fovRing.Color=faFovColor end if maFovRing then maFovRing.Color=maFovColor end
+		faUnhook()
+		maStop()
+		if tbStop_ref then tbStop_ref() end
 	end
 	local _saveDebounce=nil
 	local function _debouncedSave()
@@ -687,12 +663,8 @@ return function(ctx)
 		if UISetters.kdaEnabled then UISetters.kdaEnabled(kdaEnabled) end if UISetters.hudLogoEnabled then UISetters.hudLogoEnabled(hudLogoEnabled) end
 		if UISetters.hudLogoScale then UISetters.hudLogoScale(hudLogoScale) end
 	end
-
-	-- ── notif ─────────────────────────────────────────────────────
 	local notif=GuiLib.mkNotifSystem(R.sgAim)
 	R.notif=notif
-
-	-- ── Bullet tracer ─────────────────────────────────────────────
 	local function btCreateTracer(fromPos,toPos)
 		if not BT.enabled then return end
 		local line=Drawing.new('Line') line.Color=BT.color line.Thickness=BT.thick line.Transparency=0 line.Visible=false
@@ -731,8 +703,6 @@ return function(ctx)
 		for _,disp in con:GetChildren() do if disp.Name=='AmmoDisplay' then local res=disp:FindFirstChild('Reserve') if res then local lbl=res:FindFirstChild('Ammo') if lbl and lbl:IsA('TextLabel') and not BT.ammoLabels[lbl] then BT.ammoLabels[lbl]=true BT.prevAmmo[lbl]=tonumber(lbl.Text) lbl:GetPropertyChangedSignal('Text'):Connect(function() if BT.enabled then btOnAmmoChanged(lbl) end end) end end end end
 	end
 	local function btStart() btStop() btScan() local con=btGetContainer() if con then BT.childConn=con.ChildAdded:Connect(function() task.wait(0.3) btScan() end) end BT.scanConn=runService.Heartbeat:Connect(function() if math.random(1,30)==1 then btScan() end end) end
-
-	-- ── KDA watcher ───────────────────────────────────────────────
 	task.spawn(function()
 		local ok2,fighterSlots=pcall(function() return lplr.PlayerGui:WaitForChild('MainGui',10).MainFrame.FighterInterfaces:WaitForChild(lplr.Name,10).EliminationSlots end)
 		local function checkSlot(slot)
@@ -742,11 +712,7 @@ return function(ctx)
 		end
 		if ok2 and fighterSlots then for _,s in fighterSlots:GetChildren() do task.spawn(checkSlot,s) end fighterSlots.ChildAdded:Connect(checkSlot) end
 	end)
-
-	-- tbStop exposed at module level (set inside buildAimGUI)
 	local tbStop_ref=nil
-
-	-- ── cleanup helper ────────────────────────────────────────────
 	local function cleanup()
 		pcall(entitylib.stop) pcall(faUnhook) pcall(maStop)
 		pcall(function() if tbStop_ref then tbStop_ref() end end) pcall(btStop)
@@ -762,8 +728,6 @@ return function(ctx)
 		table.clear(Refs.tag) table.clear(Refs.weap) table.clear(Refs.tracer)
 		table.clear(UISetters)
 	end
-
-	-- ── GUI: buildAimGUI ──────────────────────────────────────────
 	local function buildAimGUI()
 		local mkToggle=GuiLib.mkToggleRow local mkSlider=GuiLib.mkSliderRow local mkSubSlider=GuiLib.mkSubSlider
 		local mkColorP=GuiLib.mkColorPicker local mkDiv=GuiLib.mkDivider local mkSec=GuiLib.mkSectionLabel
@@ -786,7 +750,6 @@ return function(ctx)
 		local leftCol=Instance.new('Frame',aimPanel) leftCol.Position=UDim2.fromOffset(0,AIM_H+1) leftCol.Size=UDim2.fromOffset(AIM_HALF,800) leftCol.BackgroundTransparency=1 leftCol.BorderSizePixel=0
 		local rightCol=Instance.new('Frame',aimPanel) rightCol.Position=UDim2.fromOffset(AIM_HALF+1,AIM_H+1) rightCol.Size=UDim2.fromOffset(AIM_HALF,800) rightCol.BackgroundTransparency=1 rightCol.BorderSizePixel=0
 		local W=AIM_HALF local yL,yR=0,0
-		-- TB locals
 		local function tbGetTarget()
 			TB_rayParams.FilterDescendantsInstances={lplr.Character,gameCamera} TB_rayParams.FilterType=Enum.RaycastFilterType.Blacklist
 			local ray=workspace:Raycast(gameCamera.CFrame.Position,gameCamera.CFrame.LookVector*TB_distance.Value,TB_rayParams)
@@ -846,7 +809,6 @@ return function(ctx)
 		yR=yR+mkDiv(rightCol,yR,W)
 		do local _h,_s=mkToggle(rightCol,'OnClick Mode',yR,W,MA_onClickOn,function(s) MA_onClickOn=s if MA_enabled then maStop() maStart() end onFaChanged() end) UISetters.maOnClick=function(v) _s(v,true) end yR=yR+_h end
 		yR=yR+mkDiv(rightCol,yR,W)
-		-- Keybind row
 		local KBIND_H=44
 		local kRow=Instance.new('Frame',rightCol) kRow.Position=UDim2.fromOffset(0,yR) kRow.Size=UDim2.fromOffset(W,KBIND_H) kRow.BackgroundColor3=C_PANEL kRow.BorderSizePixel=0
 		local kbar=Instance.new('Frame',kRow) kbar.Size=UDim2.fromOffset(2,KBIND_H) kbar.BackgroundColor3=C_TEXT kbar.BorderSizePixel=0
@@ -878,7 +840,6 @@ return function(ctx)
 				end)
 			end)
 		end)
-		-- Head/Body toggle
 		local HB_H=32
 		local hbRow=Instance.new('Frame',rightCol) hbRow.Position=UDim2.fromOffset(0,yR) hbRow.Size=UDim2.fromOffset(W,HB_H) hbRow.BackgroundColor3=C_PANEL hbRow.BorderSizePixel=0
 		local hbbar=Instance.new('Frame',hbRow) hbbar.Size=UDim2.fromOffset(2,HB_H) hbbar.BackgroundColor3=C_TEXT hbbar.BorderSizePixel=0
@@ -888,9 +849,10 @@ return function(ctx)
 		local function setHB(head) MA_targetHead=head tweenService:Create(hbHead,TI_F,{BackgroundColor3=head and C_TEXT or C_DARK,TextColor3=head and C_BG or C_DIM}):Play() tweenService:Create(hbBody,TI_F,{BackgroundColor3=head and C_DARK or C_TEXT,TextColor3=head and C_DIM or C_BG}):Play() onFaChanged() end
 		hbHead.MouseButton1Click:Connect(function() setHB(true) end) hbBody.MouseButton1Click:Connect(function() setHB(false) end) yR=yR+HB_H
 		local aimH=math.max(yL,yR)+8 aimPanel.Size=UDim2.fromOffset(AIM_W,AIM_H+1+aimH) aimVert.Size=UDim2.fromOffset(1,aimH) leftCol.Size=UDim2.fromOffset(AIM_HALF,aimH) rightCol.Size=UDim2.fromOffset(AIM_HALF,aimH)
+		if faEnabled then faHook() end
+		if MA_enabled then maStart() end
+		if TB_enabled then tbStart() end
 	end
-
-	-- ── GUI: buildRenderGUI ───────────────────────────────────────
 	local function buildRenderGUI()
 		local mkToggle=GuiLib.mkToggleRow local mkSlider=GuiLib.mkSliderRow local mkSubSlider=GuiLib.mkSubSlider
 		local mkColorP=GuiLib.mkColorPicker local mkSubColor=GuiLib.mkSubColorPicker
@@ -955,8 +917,6 @@ return function(ctx)
 		local rendH=math.max(yRL,yRR)+8 rendPanel.Size=UDim2.fromOffset(REND_W,REND_H+1+rendH)
 		rendVert.Size=UDim2.fromOffset(1,rendH) rL.Size=UDim2.fromOffset(REND_HALF,rendH) rR.Size=UDim2.fromOffset(REND_HALF,rendH)
 	end
-
-	-- ── GUI: buildTextGUI (HUD) ───────────────────────────────────
 	local function buildHudDisplay()
 		local BAR=2 local GAP=4
 		local TWEEN_IN=TweenInfo.new(0.18,Enum.EasingStyle.Quad) local TWEEN_OUT=TweenInfo.new(0.12,Enum.EasingStyle.Quad)
@@ -1030,7 +990,6 @@ return function(ctx)
 		end)
 		return hudHolder,hudRows,kdaRows,hudImgFrame,updateKdaRows,applyAlign,getBarPos,getTxtX,holderW,TWEEN_IN,TWEEN_OUT
 	end
-
 	local function makeTextWidgets(con,W,ybox)
 		local TI2=TweenInfo.new(0.12,Enum.EasingStyle.Quad) local h={}
 		function h.sec(lbl) local H=22 local f=Instance.new('Frame',con) f.Position=UDim2.fromOffset(0,ybox[1]) f.Size=UDim2.fromOffset(W,H) f.BackgroundColor3=Color3.fromRGB(11,11,11) f.BorderSizePixel=0 local b=Instance.new('Frame',f) b.Size=UDim2.fromOffset(2,H) b.BackgroundColor3=Color3.fromRGB(220,220,220) b.BorderSizePixel=0 local l=Instance.new('TextLabel',f) l.Position=UDim2.fromOffset(10,0) l.Size=UDim2.fromOffset(W-10,H) l.BackgroundTransparency=1 l.Text=lbl l.TextColor3=Color3.fromRGB(100,100,100) l.TextSize=11 l.FontFace=FONT_UB l.TextXAlignment=Enum.TextXAlignment.Left ybox[1]=ybox[1]+H end
@@ -1084,7 +1043,6 @@ return function(ctx)
 		end
 		return h
 	end
-
 	local function buildTextPanel(hudHolder,hudRows,hudImgFrame,applyAlign,saveAndNotify)
 		local sgTxt=mkSG('TextGUI',9999995) local TW,TH=220,36 local W=TW local ybox={0}
 		local panel=Instance.new('Frame',sgTxt) panel.Position=UDim2.fromOffset(1060,180) panel.BackgroundColor3=Color3.fromRGB(8,8,8) panel.BorderSizePixel=0 panel.Active=true mkCorner(panel,10) mkStroke(panel,Color3.fromRGB(38,38,38))
@@ -1129,17 +1087,12 @@ return function(ctx)
 		wg.div() UISetters.hudLogoScale=wg.sld('Logo Scale',50,200,hudLogoScale,'%',function(v) hudLogoScale=v local w=math.round(180*(v/100)) hudImgFrame.Size=UDim2.fromOffset(w,math.round(w/3)) saveAndNotify() end)
 		con.Size=UDim2.fromOffset(TW,ybox[1]+8) panel.Size=UDim2.fromOffset(TW,TH+1+ybox[1]+8) applyAlign()
 	end
-
 	local function buildTextGUI()
 		local hudHolder,hudRows,_kdaRows,hudImgFrame,_updateKda,applyAlign=buildHudDisplay()
 		local function saveAndNotify() saveAll() notif.showAction('Save config?','Save',function() notif.showInfo('Saved!',2,Icons.info) end,6,Icons.info) end
 		buildTextPanel(hudHolder,hudRows,hudImgFrame,applyAlign,saveAndNotify)
 	end
-
-	-- ── Start entitylib ───────────────────────────────────────────
 	entitylib.start()
-
-	-- ── Return module exports ─────────────────────────────────────
 	return {
 		entitylib      = entitylib,
 		saveAll        = saveAll,
