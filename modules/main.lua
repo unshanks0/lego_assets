@@ -649,12 +649,15 @@ return function(ctx)
 	end
 	local _saveDebounce=nil
 	local function _debouncedSave()
-		saveAll()
 		if GuiLib.rainbowActive then return end
 		if _saveDebounce then task.cancel(_saveDebounce) end
 		_saveDebounce=task.delay(0.5,function()
 			_saveDebounce=nil
-			R.notif.showAction('Save config?','Save',function() R.notif.showInfo('Saved!',2,Icons.info) end,6,Icons.info)
+			R.notif.showAction('Save config?','Save',function()
+				saveAll()
+				if R.onSave then R.onSave() end
+				R.notif.showInfo('Saved!',2,Icons.info)
+			end,6,Icons.info)
 		end)
 	end
 	local function onFaChanged() _debouncedSave() end
