@@ -609,7 +609,7 @@ return function(ctx)
 		rbFaFov=cfg.getBool('rbFaFov',false) rbMaFov=cfg.getBool('rbMaFov',false) rbSkel=cfg.getBool('rbSkel',false) rbHead=cfg.getBool('rbHead',false)
 		rbBox2d=cfg.getBool('rbBox2d',false) rbBox3d=cfg.getBool('rbBox3d',false) rbTagName=cfg.getBool('rbTagName',false) rbWeap=cfg.getBool('rbWeap',false)
 		rbTracer=cfg.getBool('rbTracer',false) rbBT=cfg.getBool('rbBT',false)
-		setESPFeature('skel',skelEnabled) setESPFeature('box2d',box2dEnabled) setESPFeature('box3d',box3dEnabled)
+		setESPFeature('skeleton',skelEnabled) setESPFeature('box2d',box2dEnabled) setESPFeature('box3d',box3dEnabled)
 		setESPFeature('tag',tagEnabled) setESPFeature('weapon',weaponEnabled) setESPFeature('tracer',tracerEnabled)
 		if fovRing then fovRing.Color=faFovColor end if maFovRing then maFovRing.Color=maFovColor end
 	end
