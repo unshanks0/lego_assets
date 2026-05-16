@@ -78,12 +78,13 @@ return function(ctx)
 		if entitylib.isAlive then
 			local mouse=s.MouseOrigin or getMousePos()
 			local t={}
+			local lplrRoot=lplr.Character and lplr.Character.HumanoidRootPart
 			for _,v in entitylib.List do
 				if not s.Players and v.Player then continue end
 				if not s.NPCs and v.NPC then continue end
 				if not v.Targetable then continue end
 				local rootPos=v.RootPart.Position
-				if (rootPos-lplr.Character.HumanoidRootPart.Position).Magnitude>650 then continue end
+				if lplrRoot and (rootPos-lplrRoot.Position).Magnitude>650 then continue end
 				local pos,vis=gameCamera.WorldToViewportPoint(gameCamera,v[s.Part].Position)
 				if not vis then continue end
 				local mag=(mouse-Vector2.new(pos.x,pos.y)).Magnitude
@@ -319,8 +320,7 @@ return function(ctx)
 		if FA_MethodRay.Value~='All' and args[3] and args[3].FilterType~=Enum.RaycastFilterType[FA_MethodRay.Value] then return end
 		local ent,tp,origin=faGetTarget(args[1])
 		if not ent or not tp then return end
-		local ok,dir=pcall(function() return CFrame.lookAt(origin,tp.Position).LookVector*args[2].Magnitude end)
-		if ok and dir then args[2]=dir end
+		args[2]=CFrame.lookAt(origin,tp.Position).LookVector*args[2].Magnitude
 	end
 	local function faHook()
 		if oldnamecall then return end
@@ -330,8 +330,7 @@ return function(ctx)
 			local calling=getcallingscript()
 			if calling then local list=#FA_Ignored.ListEnabled>0 and FA_Ignored.ListEnabled or {'ControlScript','ControlModule'} if table.find(list,tostring(calling)) then return oldnamecall(...) end end
 			local self,args=...,{select(2,...)}
-			local ok=pcall(faHooks.Raycast,args)
-			if not ok then return oldnamecall(self,unpack(args)) end
+			faHooks.Raycast(args)
 			return oldnamecall(self,unpack(args))
 		end)
 	end
