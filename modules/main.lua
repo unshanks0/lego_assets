@@ -323,13 +323,15 @@ return function(ctx)
 		if ok and dir then args[2]=dir end
 	end
 	local function faHook()
+		if oldnamecall then return end
 		oldnamecall=hookmetamethod(game,'__namecall',function(...)
 			if getnamecallmethod()~='Raycast' then return oldnamecall(...) end
 			if checkcaller() then return oldnamecall(...) end
 			local calling=getcallingscript()
 			if calling then local list=#FA_Ignored.ListEnabled>0 and FA_Ignored.ListEnabled or {'ControlScript','ControlModule'} if table.find(list,tostring(calling)) then return oldnamecall(...) end end
 			local self,args=...,{select(2,...)}
-			local res=faHooks.Raycast(args) if res then return unpack(res) end
+			local ok=pcall(faHooks.Raycast,args)
+			if not ok then return oldnamecall(self,unpack(args)) end
 			return oldnamecall(self,unpack(args))
 		end)
 	end
