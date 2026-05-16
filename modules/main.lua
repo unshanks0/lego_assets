@@ -613,6 +613,40 @@ return function(ctx)
 		setESPFeature('tag',tagEnabled) setESPFeature('weapon',weaponEnabled) setESPFeature('tracer',tracerEnabled)
 		if fovRing then fovRing.Color=faFovColor end if maFovRing then maFovRing.Color=maFovColor end
 	end
+	-- Direct version: reads straight from a raw key-value table, no cfg middleman.
+	-- Used when switching configs so there is zero chance of stale data.
+	local function applyConfigTable(t)
+		local function b(k,d) local v=t[k] if v==nil then return d end return v=='true' end
+		local function n(k,d) return tonumber(t[k]) or d end
+		local function s(k,d) local v=t[k] if v and v~='' then return v end return d end
+		faEnabled=b('faEnabled',false) TB_enabled=b('tbEnabled',false)
+		TB_distance.Value=n('tbDistance',100) TB_delay.Value=n('tbDelay',0)
+		FA_HeadChance.Value=n('faHeadChance',100) FA_HitChance.Value=n('faHitChance',100) FA_Range.Value=n('faRange',200)
+		faFovColor=_sc(s('faFovColor','255,255,255')) maFovColor=_sc(s('maFovColor','255,255,255'))
+		MA_enabled=b('maEnabled',false) MA_fov.Value=n('maFov',80) MA_speed.Value=n('maSpeed',10)
+		MA_onClickOn=b('maOnClick',false) MA_targetHead=b('maTargetHead',true)
+		skelEnabled=b('skelEnabled',false) skelThick=n('skelThick',1) skelColor=_sc(s('skelColor','255,255,255'))
+		skelHeadDot=b('skelHeadDot',false) headDotSize=n('headDotSize',6) headDotTrans=n('headDotTrans',0) headDotColor=_sc(s('headDotColor','255,255,255'))
+		box2dEnabled=b('box2dEnabled',false) box2dThick=n('box2dThick',1) box2dColor=_sc(s('box2dColor','255,255,255'))
+		box3dEnabled=b('box3dEnabled',false) box3dThick=n('box3dThick',1) box3dColor=_sc(s('box3dColor','255,255,255'))
+		tagEnabled=b('tagEnabled',false) tagScale=n('tagScale',1)
+		tagShowHealth=b('tagShowHealth',true) tagShowDist=b('tagShowDist',true) tagShowName=b('tagShowName',true) tagNameColor=_sc(s('tagNameColor','255,255,255'))
+		weaponEnabled=b('weaponEnabled',false) weapColor=_sc(s('weapColor','255,255,255'))
+		tracerEnabled=b('tracerEnabled',false) tracerThick=n('tracerThick',1) tracerColor=_sc(s('tracerColor','255,255,255')) tracerOrigin=s('tracerOrigin','Bottom')
+		BT.enabled=b('btEnabled',false) BT.color=_sc(s('btColor','255,255,255')) BT.duration=n('btDuration',1) BT.thick=n('btThick',1)
+		BT.fwdOff=n('btFwdOff',0) BT.downOff=n('btDownOff',0) BT.minDist=n('btMinDist',50) BT.drawTime=n('btDrawTime',0.5)
+		BT.shrinkTime=n('btShrinkTime',0.5) BT.fadeIn=n('btFadeIn',0.1) BT.fadeOut=n('btFadeOut',0.3) BT.screenTol=n('btScreenTol',100)
+		kdaEnabled=b('kdaEnabled',true) hudLogoEnabled=b('hudLogoEnabled',true) hudLogoScale=n('hudLogoScale',60)
+		txtEnabled=b('txtEnabled',true) txtFont=s('txtFont','Gotham') txtSize=n('txtSize',13) txtBg=b('txtBg',false)
+		txtBgTrans=n('txtBgTrans',50) txtRainbow=b('txtRainbow',false) txtAlign=s('txtAlign','Left') txtStroke=b('txtStroke',true)
+		txtX=n('txtX',20) txtY=n('txtY',180)
+		rbFaFov=b('rbFaFov',false) rbMaFov=b('rbMaFov',false) rbSkel=b('rbSkel',false) rbHead=b('rbHead',false)
+		rbBox2d=b('rbBox2d',false) rbBox3d=b('rbBox3d',false) rbTagName=b('rbTagName',false) rbWeap=b('rbWeap',false)
+		rbTracer=b('rbTracer',false) rbBT=b('rbBT',false)
+		setESPFeature('skeleton',skelEnabled) setESPFeature('box2d',box2dEnabled) setESPFeature('box3d',box3dEnabled)
+		setESPFeature('tag',tagEnabled) setESPFeature('weapon',weaponEnabled) setESPFeature('tracer',tracerEnabled)
+		if fovRing then fovRing.Color=faFovColor end if maFovRing then maFovRing.Color=maFovColor end
+	end
 	local _saveDebounce=nil
 	local function _debouncedSave()
 		saveAll()
@@ -1107,6 +1141,7 @@ return function(ctx)
 		entitylib      = entitylib,
 		saveAll        = saveAll,
 		applyConfig    = applyConfig,
+		applyConfigTable = applyConfigTable,
 		applyUIState   = applyUIState,
 		buildAimGUI    = buildAimGUI,
 		buildRenderGUI = buildRenderGUI,
