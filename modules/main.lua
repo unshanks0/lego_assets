@@ -317,8 +317,10 @@ return function(ctx)
 	local faHooks={}
 	faHooks.Raycast=function(args)
 		if FA_MethodRay.Value~='All' and args[3] and args[3].FilterType~=Enum.RaycastFilterType[FA_MethodRay.Value] then return end
-		local ent,tp,origin=faGetTarget(args[1]) if not ent then return end
-		args[2]=CFrame.lookAt(origin,tp.Position).LookVector*args[2].Magnitude
+		local ent,tp,origin=faGetTarget(args[1])
+		if not ent or not tp then return end
+		local ok,dir=pcall(function() return CFrame.lookAt(origin,tp.Position).LookVector*args[2].Magnitude end)
+		if ok and dir then args[2]=dir end
 	end
 	local function faHook()
 		oldnamecall=hookmetamethod(game,'__namecall',function(...)
@@ -620,6 +622,10 @@ return function(ctx)
 		faUnhook()
 		maStop()
 		if tbStop_ref then tbStop_ref() end
+		btStop()
+		if faEnabled then faHook() end
+		if MA_enabled then maStart() end
+		if BT.enabled then btStart() end
 	end
 	local _saveDebounce=nil
 	local function _debouncedSave()
