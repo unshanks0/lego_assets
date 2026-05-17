@@ -295,6 +295,7 @@ return function(ctx)
 		end
 		MA_renderConn=runService.RenderStepped:Connect(function(dt)
 			if not MA_enabled then maStop() return end
+			if not faAmmoReady then return end
 			if MA_onClickOn and not pressing then return end
 			local ent=entitylib.EntityMouse({Range=MA_fov.Value,Part=partName,Players=true,NPCs=false,Origin=gameCamera.CFrame.Position})
 			if not ent then return end
@@ -960,7 +961,7 @@ return function(ctx)
 		local STATE_MAP={faEnabled=function() return faEnabled end,MA_enabled=function() return MA_enabled end,skelEnabled=function() return skelEnabled end,box2dEnabled=function() return box2dEnabled end,box3dEnabled=function() return box3dEnabled end,tagEnabled=function() return tagEnabled end,weaponEnabled=function() return weaponEnabled end,tracerEnabled=function() return tracerEnabled end,btEnabled=function() return BT.enabled end}
 		local hudRows={}
 		local function makeRow(parent,order,col)
-			local holder=Instance.new('Frame',parent) holder.LayoutOrder=order holder.BackgroundTransparency=1 holder.BorderSizePixel=0 holder.Size=UDim2.fromOffset(0,0) holder.AutomaticSize=Enum.AutomaticSize.None
+			local holder=Instance.new('Frame',parent) holder.LayoutOrder=order holder.BackgroundTransparency=1 holder.BorderSizePixel=0 holder.Size=UDim2.fromOffset(0,0) holder.AutomaticSize=Enum.AutomaticSize.None holder.ClipsDescendants=true
 			local hbg=Instance.new('Frame',holder) hbg.Size=UDim2.fromScale(1,1) hbg.BackgroundColor3=Color3.new(0,0,0) hbg.BackgroundTransparency=0.5 hbg.BorderSizePixel=0 hbg.Visible=txtBg Instance.new('UICorner',hbg).CornerRadius=UDim.new(0,3)
 			local hline=Instance.new('Frame',holder) hline.Size=UDim2.new(1,0,0,1) hline.Position=UDim2.new(0,0,1,-1) hline.BackgroundColor3=Color3.new(0,0,0) hline.BackgroundTransparency=0.85 hline.BorderSizePixel=0
 			local bar=Instance.new('Frame',holder) bar.Name='Bar' bar.Size=UDim2.new(0,BAR,1,0) bar.Position=getBarPos() bar.BackgroundColor3=col bar.BorderSizePixel=0 bar.ZIndex=10
