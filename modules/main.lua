@@ -279,6 +279,7 @@ return function(ctx)
 		if MA_conn2 then MA_conn2:Disconnect() MA_conn2=nil end
 		if MA_renderConn then MA_renderConn:Disconnect() MA_renderConn=nil end
 	end
+	local faAmmoReady=false
 	local function maStart()
 		maStop()
 		local partName=MA_targetHead and 'Head' or 'RootPart' local pressing=false
@@ -310,7 +311,6 @@ return function(ctx)
 		end)
 	end
 	local oldnamecall=nil
-	local faAmmoReady=false
 	_EXIT_THREADS[#_EXIT_THREADS+1]=task.spawn(function()
 		while true do
 			local ok,n=pcall(function()
