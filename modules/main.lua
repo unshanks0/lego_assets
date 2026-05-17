@@ -320,7 +320,11 @@ return function(ctx)
 		if FA_MethodRay.Value~='All' and args[3] and args[3].FilterType~=Enum.RaycastFilterType[FA_MethodRay.Value] then return end
 		local ent,tp,origin=faGetTarget(args[1])
 		if not ent or not tp then return end
-		args[2]=CFrame.lookAt(origin,tp.Position).LookVector*args[2].Magnitude
+		local nx=rand.NextNumber(rand,-0.25,0.25)
+		local ny=rand.NextNumber(rand,-0.25,0.25)
+		local nz=rand.NextNumber(rand,-0.25,0.25)
+		local target=tp.Position+Vector3.new(nx,ny,nz)
+		args[2]=CFrame.lookAt(origin,target).LookVector*args[2].Magnitude
 	end
 	local function faHook()
 		if oldnamecall then return end
