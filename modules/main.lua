@@ -309,7 +309,14 @@ return function(ctx)
 		end)
 	end
 	local oldnamecall=nil
+	local function getAmmoChildCount()
+		local ok,n=pcall(function()
+			return #lplr.PlayerGui.MainGui.MainFrame.FighterInterfaces[lplr.Name].Hotbar.Container.AmmoDisplays:GetChildren()
+		end)
+		return ok and n or 0
+	end
 	local function faGetTarget(origin)
+		if getAmmoChildCount()<2 then return end
 		if rand.NextNumber(rand,0,100)>FA_HitChance.Value then return end
 		local part=rand.NextNumber(rand,0,100)<FA_HeadChance.Value and 'Head' or 'RootPart'
 		local ent=entitylib.EntityMouse({Range=FA_Range.Value,Part=part,Origin=origin,Players=FA_Target.Players.Enabled,NPCs=FA_Target.NPCs.Enabled})
