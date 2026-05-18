@@ -248,6 +248,67 @@ return function(ctx)
 		fadeIn=cfg.getNum('btFadeIn',0.1),fadeOut=cfg.getNum('btFadeOut',0.1),screenTol=cfg.getNum('btScreenTol',1500),
 		ammoLabels={},prevAmmo={},scanConn=nil,childConn=nil,
 	}
+	local hitEffectsEnabled=cfg.getBool('hitEffectsEnabled',false)
+	local selectedSound=cfg.getStr('selectedSound','amongus')
+	local SOUND_LIST={
+		{key='amongus',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/amongus.mp3'},
+		{key='arrowhit',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/arrowhit.mp3'},
+		{key='bamboo',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/bamboo.mp3'},
+		{key='battleflied',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/battleflied.mp3'},
+		{key='bell',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/bell.mp3'},
+		{key='bubble',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/bubble.mp3'},
+		{key='cs2',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/cs2.mp3'},
+		{key='glass',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/glass.mp3'},
+		{key='metalbat',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/metalbat.mp3'},
+		{key='minecraft',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/minecraft.mp3'},
+		{key='oOOo',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/oOOo.mp3'},
+		{key='osu',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/osu.mp3'},
+		{key='rust',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/rust.mp3'},
+		{key='smoothhit',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/smoothhit.mp3'},
+		{key='snowball',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/snowball.mp3'},
+		{key='taaa',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/taaa.mp3'},
+		{key='terraria',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/terraria.mp3'},
+		{key='tf2',url='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/tf2.mp3'},
+	}
+	local customSoundList={}
+	local function scanCustomSounds()
+		customSoundList={}
+		local ok,files=pcall(listfiles,'lego/audios')
+		if ok and files then for _,f in files do local name=f:match('([^/\\]+)%.mp3$') if name then customSoundList[#customSoundList+1]={key=name,path=f} end end end
+	end
+	scanCustomSounds()
+	local hitEffectConn=nil
+	local function stopHitEffect()
+		if hitEffectConn then hitEffectConn:Disconnect() hitEffectConn=nil end
+	end
+	local function applyHitEffect()
+		stopHitEffect()
+		if not hitEffectsEnabled then return end
+		local url,localPath
+		for _,s in SOUND_LIST do if s.key==selectedSound then url=s.url break end end
+		for _,s in customSoundList do if s.key==selectedSound then localPath=s.path break end end
+		local asset
+		if localPath then
+			local ok,a=pcall(getsynasset,localPath) if ok then asset=a end
+		elseif url then
+			local ok,data=pcall(function() return game:HttpGet(url,true) end)
+			if ok and data then
+				pcall(writefile,'CustomSound.mp3',data)
+				local ok2,a=pcall(getsynasset,'CustomSound.mp3') if ok2 then asset=a end
+			end
+		end
+		if not asset then return end
+		local ReplaceIds={['rbxassetid://16537449730']=true,['rbxassetid://16537337310']=true,['rbxassetid://13110130082']=true}
+		local ok2,Target=pcall(function()
+			return lplr.PlayerScripts.Modules.ClientReplicatedClasses.ClientFighter.ClientItem.ClientViewModel
+		end)
+		if not ok2 or not Target then return end
+		local function replaceSound(v)
+			if v:IsA('Sound') and ReplaceIds[v.SoundId] then v.SoundId=asset end
+		end
+		for _,v in ipairs(Target:GetDescendants()) do pcall(replaceSound,v) end
+		hitEffectConn=Target.DescendantAdded:Connect(function(v) task.wait() pcall(replaceSound,v) end)
+	end
 	local rbFaFov=cfg.getBool('rbFaFov',false) local rbMaFov=cfg.getBool('rbMaFov',false)
 	local rbSkel=cfg.getBool('rbSkel',false)    local rbHead=cfg.getBool('rbHead',false)
 	local rbBox2d=cfg.getBool('rbBox2d',false)  local rbBox3d=cfg.getBool('rbBox3d',false)
@@ -572,6 +633,7 @@ return function(ctx)
 			btDrawTime=tostring(BT.drawTime),btShrinkTime=tostring(BT.shrinkTime),btFadeIn=tostring(BT.fadeIn),btFadeOut=tostring(BT.fadeOut),btScreenTol=tostring(BT.screenTol),
 			txtFont=txtFont,txtSize=tostring(txtSize),txtBg=tostring(txtBg),txtBgTrans=tostring(txtBgTrans),
 			txtRainbow=tostring(txtRainbow),txtAlign=txtAlign,txtEnabled=tostring(txtEnabled),txtStroke=tostring(txtStroke),txtX=tostring(txtX),txtY=tostring(txtY),
+			hitEffectsEnabled=tostring(hitEffectsEnabled),selectedSound=selectedSound,
 			configName=mv.configName or '',legoUsername=mv.legoUsername or 'Unnamed',
 			mainBannerUrl=mv.mainBannerUrl or '',mainParagraph=mv.mainParagraph or '',mainHudImgUrl=mv.mainHudImgUrl or '',
 		})
@@ -929,16 +991,154 @@ return function(ctx)
 		yRR=yRR+(mkSubColor(rR,yRR,RW,'Color',tracerColor,function(col) applyTracerColor(col) rbTracer=false onEspChanged() end,sgRend,rbTracer))
 		yRR=yRR+mkDiv(rR,yRR,RW)
 		mkSingle(rR,yRR,RW,{'Top','Middle','Bottom'},tracerOrigin,function(v) tracerOrigin=v onEspChanged() end)
-		yRR=yRR+mkDiv(rR,yRR,RW) yRR=yRR+mkSec(rR,yRR,RW,'BULLET TRAILS')
-		do local _h,_s=mkToggle(rR,'Bullet Trails',yRR,RW,BT.enabled,function(s) BT.enabled=s if s then btStart() else btStop() end onEspChanged() end) UISetters.btEnabled=function(v) _s(v,true) end yRR=yRR+_h end
-		do local _h,_s=mkSubSlider(rR,'Duration',yRR,RW,1,100,math.round(BT.duration*10),'s',function(v) BT.duration=v/10 onEspChanged() end) UISetters.btDuration=_s yRR=yRR+_h end
-		do local _h,_s=mkSubSlider(rR,'Thickness',yRR,RW,1,20,math.round(BT.thick*2),'',function(v) BT.thick=v/2 onEspChanged() end) UISetters.btThick=_s yRR=yRR+_h end
-		yRR=yRR+(mkSubColor(rR,yRR,RW,'Color',BT.color,function(col) BT.color=col rbBT=false onEspChanged() end,sgRend,rbBT))
 		yRR=yRR+mkDiv(rR,yRR,RW)
 		local rendH=math.max(yRL,yRR)+8 rendPanel.Size=UDim2.fromOffset(REND_W,REND_H+1+rendH)
 		rendVert.Size=UDim2.fromOffset(1,rendH) rL.Size=UDim2.fromOffset(REND_HALF,rendH) rR.Size=UDim2.fromOffset(REND_HALF,rendH)
 	end
-	local function buildHudDisplay()
+	local function buildFunGUI()
+		local mkToggle=GuiLib.mkToggleRow local mkSubSlider=GuiLib.mkSubSlider
+		local mkSubColor=GuiLib.mkSubColorPicker local mkDiv=GuiLib.mkDivider
+		local mkSec=GuiLib.mkSectionLabel local mkHeader=GuiLib.mkHeaderPanel
+		local sgFun=R.sgFun
+		local FUN_W=420 local FUN_H=36
+		local funPanel=mkHeader(sgFun,'FUN',Icons.misc,FUN_W,FUN_H,30,400)
+		local col=Instance.new('Frame',funPanel) col.Position=UDim2.fromOffset(0,FUN_H+1) col.Size=UDim2.fromOffset(FUN_W,800) col.BackgroundTransparency=1 col.BorderSizePixel=0
+		local W=FUN_W local y=0
+		y=y+mkSec(col,y,W,'BULLET TRAILS')
+		do local _h,_s=mkToggle(col,'Bullet Trails',y,W,BT.enabled,function(s) BT.enabled=s if s then btStart() else btStop() end onEspChanged() end) UISetters.btEnabled=function(v) _s(v,true) end y=y+_h end
+		do local _h,_s=mkSubSlider(col,'Duration',y,W,1,100,math.round(BT.duration*10),'s',function(v) BT.duration=v/10 onEspChanged() end) UISetters.btDuration=_s y=y+_h end
+		do local _h,_s=mkSubSlider(col,'Thickness',y,W,1,20,math.round(BT.thick*2),'',function(v) BT.thick=v/2 onEspChanged() end) UISetters.btThick=_s y=y+_h end
+		y=y+(mkSubColor(col,y,W,'Color',BT.color,function(c2) BT.color=c2 rbBT=false onEspChanged() end,sgFun,rbBT))
+		y=y+mkDiv(col,y,W)
+		y=y+mkSec(col,y,W,'HIT EFFECTS')
+		local BUILTIN={
+			AMONGUS='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/amongus.mp3',
+			ARROWHIT='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/arrowhit.mp3',
+			BAMBOO='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/bamboo.mp3',
+			BATTLEFIELD='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/battleflied.mp3',
+			BELL='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/bell.mp3',
+			BUBBLE='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/bubble.mp3',
+			CS2='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/cs2.mp3',
+			GLASS='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/glass.mp3',
+			METALBAT='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/metalbat.mp3',
+			MINECRAFT='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/minecraft.mp3',
+			OOOO='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/oOOo.mp3',
+			OSU='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/osu.mp3',
+			RUST='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/rust.mp3',
+			SMOOTHHIT='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/smoothhit.mp3',
+			SNOWBALL='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/snowball.mp3',
+			TAAA='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/taaa.mp3',
+			TERRARIA='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/terraria.mp3',
+			TF2='https://github.com/unshanks0/lego_assets/raw/refs/heads/main/assets/audios/tf2.mp3',
+		}
+		local REPLACE_IDS={['rbxassetid://16537449730']=true,['rbxassetid://16537337310']=true,['rbxassetid://13110130082']=true}
+		local function buildSoundList()
+			local list={} for k in BUILTIN do list[#list+1]=k end table.sort(list)
+			local ok,files=pcall(listfiles,'lego/audios')
+			if ok and files then for _,f in files do local n=f:match('([^/\\]+)%.mp3$') if n then local u=n:upper() if not BUILTIN[u] then list[#list+1]=u end end end end
+			return list
+		end
+		local soundList=buildSoundList()
+		local selSound=soundList[1] or 'AMONGUS'
+		local hitEnabled=false local hitConn=nil
+		local function applyHitSound()
+			local url=BUILTIN[selSound]
+			pcall(makefolder,'lego/audios')
+			local cachePath='lego/audios/'..selSound..'.mp3'
+			if url then
+				local ok2,ex=pcall(readfile,cachePath)
+				if not(ok2 and ex and #ex>100) then
+					local ok3,data=pcall(function() return game:HttpGet(url,true) end)
+					if ok3 and data then pcall(writefile,cachePath,data) end
+				end
+			end
+			local ok4,data4=pcall(readfile,cachePath)
+			if not(ok4 and data4) then return end
+			pcall(writefile,'lego_hitsound.mp3',data4)
+			if not getsynasset then return end
+			local ok5,asset=pcall(getsynasset,'lego_hitsound.mp3')
+			if not ok5 or not asset then return end
+			local ok6,Target=pcall(function() return lplr.PlayerScripts.Modules.ClientReplicatedClasses.ClientFighter.ClientItem.ClientViewModel end)
+			if not ok6 or not Target then return end
+			local function repSound(v) if v:IsA('Sound') and REPLACE_IDS[v.SoundId] then v.SoundId=asset end end
+			for _,v in ipairs(Target:GetDescendants()) do pcall(repSound,v) end
+			if hitConn then hitConn:Disconnect() end
+			hitConn=Target.DescendantAdded:Connect(function(v) task.wait() pcall(repSound,v) end)
+		end
+		do local _h=mkToggle(col,'Hit Effects',y,W,hitEnabled,function(s) hitEnabled=s if s then task.spawn(applyHitSound) else if hitConn then hitConn:Disconnect() hitConn=nil end end end) y=y+_h end
+		y=y+mkDiv(col,y,W)
+		local DD_H=30 local ITEM_H=24 local MAX_V=6
+		local ddRow=Instance.new('Frame',col) ddRow.Position=UDim2.fromOffset(0,y) ddRow.Size=UDim2.fromOffset(W,DD_H) ddRow.BackgroundColor3=C_PANEL ddRow.BorderSizePixel=0 ddRow.ClipsDescendants=false ddRow.ZIndex=10
+		Instance.new('Frame',ddRow).Size=UDim2.fromOffset(2,DD_H)
+		ddRow:FindFirstChildWhichIsA('Frame').BackgroundColor3=C_TEXT ddRow:FindFirstChildWhichIsA('Frame').BorderSizePixel=0
+		mkLbl(ddRow,'Sound',16,0,W-120,DD_H,11,FONT_UI,C_DIM)
+		local ddVal=Instance.new('TextLabel',ddRow) ddVal.Size=UDim2.fromOffset(W-20,DD_H) ddVal.BackgroundTransparency=1 ddVal.Text=selSound ddVal.TextColor3=C_TEXT ddVal.TextSize=11 ddVal.FontFace=FONT_UB ddVal.TextXAlignment=Enum.TextXAlignment.Right ddVal.ZIndex=11
+		local ddArr=Instance.new('TextLabel',ddRow) ddArr.Size=UDim2.fromOffset(W-4,DD_H) ddArr.BackgroundTransparency=1 ddArr.Text='v' ddArr.TextColor3=C_DIM ddArr.TextSize=10 ddArr.FontFace=FONT_UB ddArr.TextXAlignment=Enum.TextXAlignment.Right ddArr.ZIndex=11
+		local ddScroll=Instance.new('ScrollingFrame',ddRow)
+		ddScroll.Position=UDim2.fromOffset(0,DD_H) ddScroll.Size=UDim2.fromOffset(W,math.min(#soundList,MAX_V)*ITEM_H)
+		ddScroll.BackgroundColor3=Color3.fromRGB(12,12,12) ddScroll.BorderSizePixel=0 ddScroll.Visible=false ddScroll.ZIndex=50
+		ddScroll.ScrollBarThickness=3 ddScroll.ScrollBarImageColor3=Color3.fromRGB(60,60,60)
+		ddScroll.CanvasSize=UDim2.fromOffset(0,#soundList*ITEM_H)
+		mkCorner(ddScroll,4) mkStroke(ddScroll,Color3.fromRGB(38,38,38))
+		local ddOpen=false local ddBtns={}
+		local function refreshDd()
+			for _,c in ddScroll:GetChildren() do if c:IsA('TextButton') then c:Destroy() end end
+			table.clear(ddBtns)
+			ddScroll.CanvasSize=UDim2.fromOffset(0,#soundList*ITEM_H)
+			for i,name in soundList do
+				local b=Instance.new('TextButton',ddScroll) b.Size=UDim2.fromOffset(W,ITEM_H) b.Position=UDim2.fromOffset(0,(i-1)*ITEM_H)
+				b.BackgroundColor3=name==selSound and Color3.fromRGB(28,28,28) or Color3.fromRGB(12,12,12)
+				b.BorderSizePixel=0 b.Text=name b.TextColor3=name==selSound and C_TEXT or C_DIM
+				b.TextSize=11 b.FontFace=FONT_UB b.AutoButtonColor=false b.ZIndex=51
+				b.MouseEnter:Connect(function() if name~=selSound then b.BackgroundColor3=Color3.fromRGB(22,22,22) end end)
+				b.MouseLeave:Connect(function() b.BackgroundColor3=name==selSound and Color3.fromRGB(28,28,28) or Color3.fromRGB(12,12,12) end)
+				b.MouseButton1Click:Connect(function()
+					selSound=name ddVal.Text=name ddOpen=false ddScroll.Visible=false ddArr.Text='v'
+					for _,bb in ddBtns do bb.BackgroundColor3=bb.Text==name and Color3.fromRGB(28,28,28) or Color3.fromRGB(12,12,12) bb.TextColor3=bb.Text==name and C_TEXT or C_DIM end
+					if hitEnabled then task.spawn(applyHitSound) end
+				end)
+				ddBtns[#ddBtns+1]=b
+			end
+		end
+		refreshDd()
+		local ddBtn=Instance.new('TextButton',ddRow) ddBtn.Size=UDim2.fromScale(1,1) ddBtn.BackgroundTransparency=1 ddBtn.Text='' ddBtn.ZIndex=15
+		ddBtn.MouseButton1Click:Connect(function() ddOpen=not ddOpen ddScroll.Visible=ddOpen ddArr.Text=ddOpen and '^' or 'v' end)
+		y=y+DD_H y=y+mkDiv(col,y,W)
+		local INP_H=30 local BTN_H=26 local IPAD=4
+		local TBW=math.floor(W*0.70) local BTNW=W-TBW-IPAD*2
+		local inpRow=Instance.new('Frame',col) inpRow.Position=UDim2.fromOffset(0,y) inpRow.Size=UDim2.fromOffset(W,INP_H) inpRow.BackgroundColor3=C_PANEL inpRow.BorderSizePixel=0
+		local urlTb=Instance.new('TextBox',inpRow) urlTb.Position=UDim2.fromOffset(IPAD,(INP_H-BTN_H)/2) urlTb.Size=UDim2.fromOffset(TBW-IPAD,BTN_H) urlTb.BackgroundColor3=Color3.fromRGB(14,14,14) urlTb.BorderSizePixel=0 urlTb.Text='' urlTb.PlaceholderText='Audio URL...' urlTb.TextColor3=Color3.fromRGB(180,180,180) urlTb.PlaceholderColor3=Color3.fromRGB(55,55,55) urlTb.TextSize=10 urlTb.FontFace=FONT_UI urlTb.ClearTextOnFocus=false urlTb.TextXAlignment=Enum.TextXAlignment.Left urlTb.TextTruncate=Enum.TextTruncate.AtEnd mkCorner(urlTb,4) mkStroke(urlTb,Color3.fromRGB(30,30,30)) Instance.new('UIPadding',urlTb).PaddingLeft=UDim.new(0,5)
+		local addBtn=Instance.new('TextButton',inpRow) addBtn.Position=UDim2.fromOffset(TBW+IPAD,(INP_H-BTN_H)/2) addBtn.Size=UDim2.fromOffset(BTNW,BTN_H) addBtn.BackgroundColor3=Color3.fromRGB(20,35,20) addBtn.BorderSizePixel=0 addBtn.Text='Add to list' addBtn.TextColor3=Color3.fromRGB(80,200,80) addBtn.TextSize=10 addBtn.FontFace=FONT_UB addBtn.AutoButtonColor=false mkCorner(addBtn,4) mkStroke(addBtn,Color3.fromRGB(30,55,30))
+		addBtn.MouseButton1Click:Connect(function()
+			local url2=urlTb.Text:match('^%s*(.-)%s*$') if url2=='' then return end
+			R.notif.showInfo('Downloading...',2,Icons.info)
+			task.spawn(function()
+				local ok7,data7=pcall(function() return game:HttpGet(url2,true) end)
+				if not ok7 or not data7 or data7=='' then R.notif.showInfo('Download failed',2,Icons.info) return end
+				urlTb.Text=''
+				local OW,OH=300,116
+				local ov=Instance.new('Frame',sgFun) ov.Size=UDim2.fromScale(1,1) ov.BackgroundColor3=Color3.new() ov.BackgroundTransparency=0.5 ov.BorderSizePixel=0 ov.ZIndex=98
+				local pop=Instance.new('Frame',sgFun) pop.Size=UDim2.fromOffset(OW,OH) pop.AnchorPoint=Vector2.new(0.5,0.5) pop.Position=UDim2.fromScale(0.5,0.48) pop.BackgroundColor3=Color3.fromRGB(14,14,14) pop.BorderSizePixel=0 pop.ZIndex=100 mkCorner(pop,8) mkStroke(pop,C_WHITE)
+				local pLbl=Instance.new('TextLabel',pop) pLbl.Size=UDim2.fromOffset(OW,34) pLbl.Position=UDim2.fromOffset(0,6) pLbl.BackgroundTransparency=1 pLbl.Text='Save sound as' pLbl.TextColor3=C_TEXT pLbl.TextSize=13 pLbl.FontFace=FONT_UB pLbl.ZIndex=101 pLbl.TextXAlignment=Enum.TextXAlignment.Center
+				local nBox=Instance.new('TextBox',pop) nBox.Position=UDim2.fromOffset(12,40) nBox.Size=UDim2.fromOffset(OW-24,28) nBox.BackgroundColor3=Color3.fromRGB(22,22,22) nBox.BorderSizePixel=0 nBox.Text='' nBox.PlaceholderText='Name (blank = auto)...' nBox.TextColor3=C_TEXT nBox.PlaceholderColor3=C_DIM nBox.TextSize=11 nBox.FontFace=FONT_UI nBox.ClearTextOnFocus=false nBox.TextXAlignment=Enum.TextXAlignment.Left nBox.ZIndex=101 mkCorner(nBox,5) mkStroke(nBox,Color3.fromRGB(38,38,38)) Instance.new('UIPadding',nBox).PaddingLeft=UDim.new(0,6)
+				local sBtn=Instance.new('TextButton',pop) sBtn.Position=UDim2.fromOffset(12,74) sBtn.Size=UDim2.fromOffset(OW-24,28) sBtn.BackgroundColor3=Color3.fromRGB(20,35,20) sBtn.BorderSizePixel=0 sBtn.Text='Save' sBtn.TextColor3=Color3.fromRGB(80,200,80) sBtn.TextSize=12 sBtn.FontFace=FONT_UB sBtn.AutoButtonColor=false sBtn.ZIndex=101 mkCorner(sBtn,5)
+				sBtn.MouseButton1Click:Connect(function()
+					local inp=nBox.Text:match('^%s*(.-)%s*$')
+					pcall(makefolder,'lego/audios')
+					local saveName
+					if inp=='' then
+						local n=1 repeat saveName='CUSTOMSOUND_'..n n=n+1 until not(function() local ok8,r=pcall(readfile,'lego/audios/'..saveName..'.mp3') return ok8 and r and #r>10 end)()
+					else saveName=inp:upper():gsub('[^%w_]','_') end
+					pcall(writefile,'lego/audios/'..saveName..'.mp3',data7)
+					pop:Destroy() ov:Destroy()
+					soundList=buildSoundList() selSound=saveName ddVal.Text=saveName refreshDd()
+					R.notif.showInfo('Saved: '..saveName,2,Icons.info)
+				end)
+			end)
+		end)
+		y=y+INP_H
+		funPanel.Size=UDim2.fromOffset(FUN_W,FUN_H+1+y+8)
+	end
 		local BAR=2 local GAP=4
 		local TWEEN_IN=TweenInfo.new(0.18,Enum.EasingStyle.Quad) local TWEEN_OUT=TweenInfo.new(0.12,Enum.EasingStyle.Quad)
 		local function isRight() return txtAlign=='Right' end
@@ -1141,8 +1341,9 @@ return function(ctx)
 		getMaFovRing   = function() return maFovRing end,
 		getFaEnabled   = function() return faEnabled end,
 		getMAEnabled   = function() return MA_enabled end,
-		setScreenGuis  = function(sa,sr,tg)
-			R.sgAim=sa R.sgRend=sr tagGui=tg
+		buildFunGUI    = buildFunGUI,
+		setScreenGuis  = function(sa,sr,tg,sf)
+			R.sgAim=sa R.sgRend=sr tagGui=tg R.sgFun=sf
 			notif=GuiLib.mkNotifSystem(sa) R.notif=notif
 		end,
 		remakeFovRings = function()
