@@ -29,9 +29,6 @@ return function(ctx)
 	local mkStroke = GuiLib.mkStroke
 	local mkLbl    = GuiLib.mkLbl
 	local gameCamera = R.getCamera()
-	_EXIT_CONNS[#_EXIT_CONNS+1] = workspace:GetPropertyChangedSignal('CurrentCamera'):Connect(function()
-		gameCamera = workspace.CurrentCamera or workspace:FindFirstChildWhichIsA('Camera')
-	end)
 	local function _sc(s) local r,g,b=s:match("^(%d+),(%d+),(%d+)$") if r then return Color3.fromRGB(tonumber(r),tonumber(g),tonumber(b)) end return Color3.new(1,1,1) end
 	local function strToColor(s) local r,g,b=s:match('^(%d+),(%d+),(%d+)$') if r then return Color3.fromRGB(tonumber(r),tonumber(g),tonumber(b)) end return Color3.new(1,1,1) end
 	local function colorToStr(c3) return math.round(c3.R*255)..','..math.round(c3.G*255)..','..math.round(c3.B*255) end
