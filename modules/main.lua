@@ -1139,6 +1139,7 @@ return function(ctx)
 		y=y+INP_H
 		funPanel.Size=UDim2.fromOffset(FUN_W,FUN_H+1+y+8)
 	end
+	local function buildHudDisplay()
 		local BAR=2 local GAP=4
 		local TWEEN_IN=TweenInfo.new(0.18,Enum.EasingStyle.Quad) local TWEEN_OUT=TweenInfo.new(0.12,Enum.EasingStyle.Quad)
 		local function isRight() return txtAlign=='Right' end
