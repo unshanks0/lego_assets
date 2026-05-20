@@ -306,11 +306,7 @@ return function(ctx)
 		for _,v in ipairs(Target:GetDescendants()) do pcall(replaceSound,v) end
 		hitEffectConn=Target.DescendantAdded:Connect(function(v) task.wait() pcall(replaceSound,v) end)
 	end
-	local rbFaFov=cfg.getBool('rbFaFov',false) local rbMaFov=cfg.getBool('rbMaFov',false)
-	local rbSkel=cfg.getBool('rbSkel',false)    local rbHead=cfg.getBool('rbHead',false)
-	local rbBox2d=cfg.getBool('rbBox2d',false)  local rbBox3d=cfg.getBool('rbBox3d',false)
-	local rbTagName=cfg.getBool('rbTagName',false) local rbWeap=cfg.getBool('rbWeap',false)
-	local rbTracer=cfg.getBool('rbTracer',false)   local rbBT=cfg.getBool('rbBT',false)
+	local rb={faFov=cfg.getBool('rb.faFov',false),maFov=cfg.getBool('rb.maFov',false),skel=cfg.getBool('rb.skel',false),head=cfg.getBool('rb.head',false),box2d=cfg.getBool('rb.box2d',false),box3d=cfg.getBool('rb.box3d',false),tagName=cfg.getBool('rb.tagName',false),weap=cfg.getBool('rb.weap',false),tracer=cfg.getBool('rb.tracer',false),BT=cfg.getBool('rb.BT',false)}
 	local TXT_FONTS={Gotham=Font.new('rbxasset://fonts/families/GothamSSm.json'),Arial=Font.new('rbxasset://fonts/families/Arial.json'),Scifi=Font.fromEnum(Enum.Font.SciFi)}
 	local txtFont=cfg.getStr('txtFont','Arial')    local txtSize=cfg.getNum('txtSize',13)
 	local txtColor=strToColor(cfg.getStr('txtColor','255,255,255'))
@@ -508,6 +504,8 @@ return function(ctx)
 				for i,ln in ls do e['L'..i].From=ln[1] e['L'..i].To=ln[2] e['L'..i].Visible=true e['L'..i].Thickness=box3dThick end
 			end
 		end
+	end)()
+	;(function()
 		local function makeTagFrame(parent)
 			local f=Instance.new('Frame',parent) f.BackgroundColor3=Color3.new() f.BackgroundTransparency=0.5 f.BorderSizePixel=0 f.AutomaticSize=Enum.AutomaticSize.XY f.AnchorPoint=Vector2.new(0.5,1) f.Visible=false
 			Instance.new('UICorner',f).CornerRadius=UDim.new(0,3)
@@ -605,9 +603,8 @@ return function(ctx)
 		for _,k in REQUIRED_KEYS do if not raw:find(k..'=',1,true) then return true end end
 		return false
 	end
-	local function saveAll()
-		local mv=mainVars or {}
-		cfg.save({
+	local function _saveData1()
+		return {
 			faEnabled=tostring(faEnabled),tbEnabled=tostring(TB_enabled),tbDistance=tostring(TB_distance.Value),tbDelay=tostring(TB_delay.Value),
 			faHeadChance=tostring(FA_HeadChance.Value),faHitChance=tostring(FA_HitChance.Value),faRange=tostring(FA_Range.Value),
 			faFovColor=math.round(faFovColor.R*255)..','..math.round(faFovColor.G*255)..','..math.round(faFovColor.B*255),
@@ -619,21 +616,31 @@ return function(ctx)
 			skelHeadDot=tostring(skelHeadDot),headDotSize=tostring(headDotSize),headDotTrans=tostring(headDotTrans),headDotColor=colorToStr(headDotColor),
 			box2dEnabled=tostring(box2dEnabled),box2dThick=tostring(box2dThick),box2dColor=colorToStr(box2dColor),
 			box3dEnabled=tostring(box3dEnabled),box3dThick=tostring(box3dThick),box3dColor=colorToStr(box3dColor),
+		}
+	end
+	local function _saveData2()
+		return {
 			tagEnabled=tostring(tagEnabled),tagScale=tostring(tagScale),
 			tagShowHealth=tostring(tagShowHealth),tagShowDist=tostring(tagShowDist),tagShowName=tostring(tagShowName),tagNameColor=colorToStr(tagNameColor),
 			weaponEnabled=tostring(weaponEnabled),weapColor=colorToStr(weapColor),
 			tracerEnabled=tostring(tracerEnabled),tracerThick=tostring(tracerThick),tracerColor=colorToStr(tracerColor),tracerOrigin=tracerOrigin,
 			kdaEnabled=tostring(kdaEnabled),hudLogoEnabled=tostring(hudLogoEnabled),hudLogoScale=tostring(hudLogoScale),
-			rbFaFov=tostring(rbFaFov),rbMaFov=tostring(rbMaFov),rbSkel=tostring(rbSkel),rbHead=tostring(rbHead),
-			rbBox2d=tostring(rbBox2d),rbBox3d=tostring(rbBox3d),rbTagName=tostring(rbTagName),rbWeap=tostring(rbWeap),rbTracer=tostring(rbTracer),rbBT=tostring(rbBT),
+			rbFaFov=tostring(rb.faFov),rbMaFov=tostring(rb.maFov),rbSkel=tostring(rb.skel),rbHead=tostring(rb.head),
+			rbBox2d=tostring(rb.box2d),rbBox3d=tostring(rb.box3d),rbTagName=tostring(rb.tagName),rbWeap=tostring(rb.weap),rbTracer=tostring(rb.tracer),rbBT=tostring(rb.BT),
 			btColor=colorToStr(BT.color),btFwdOff=tostring(BT.fwdOff),btDownOff=tostring(BT.downOff),btMinDist=tostring(BT.minDist),
 			btDrawTime=tostring(BT.drawTime),btShrinkTime=tostring(BT.shrinkTime),btFadeIn=tostring(BT.fadeIn),btFadeOut=tostring(BT.fadeOut),btScreenTol=tostring(BT.screenTol),
 			txtFont=txtFont,txtSize=tostring(txtSize),txtBg=tostring(txtBg),txtBgTrans=tostring(txtBgTrans),
 			txtRainbow=tostring(txtRainbow),txtAlign=txtAlign,txtEnabled=tostring(txtEnabled),txtStroke=tostring(txtStroke),txtX=tostring(txtX),txtY=tostring(txtY),
 			hitEffectsEnabled=tostring(hitEffectsEnabled),selectedSound=selectedSound,
-			configName=mv.configName or '',legoUsername=mv.legoUsername or 'Unnamed',
-			mainBannerUrl=mv.mainBannerUrl or '',mainParagraph=mv.mainParagraph or '',mainHudImgUrl=mv.mainHudImgUrl or '',
-		})
+		}
+	end
+	local function saveAll()
+		local mv=mainVars or {}
+		local t=_saveData1()
+		for k,v in _saveData2() do t[k]=v end
+		t.configName=mv.configName or '' t.legoUsername=mv.legoUsername or 'Unnamed'
+		t.mainBannerUrl=mv.mainBannerUrl or '' t.mainParagraph=mv.mainParagraph or '' t.mainHudImgUrl=mv.mainHudImgUrl or ''
+		cfg.save(t)
 	end
 	local function applyConfig()
 		faEnabled=cfg.getBool('faEnabled',false) TB_enabled=cfg.getBool('tbEnabled',false)
@@ -650,6 +657,11 @@ return function(ctx)
 		tagShowHealth=cfg.getBool('tagShowHealth',true) tagShowDist=cfg.getBool('tagShowDist',true) tagShowName=cfg.getBool('tagShowName',true) tagNameColor=_sc(cfg.getStr('tagNameColor','255,255,255'))
 		weaponEnabled=cfg.getBool('weaponEnabled',false) weapColor=_sc(cfg.getStr('weapColor','255,255,255'))
 		tracerEnabled=cfg.getBool('tracerEnabled',false) tracerThick=cfg.getNum('tracerThick',1) tracerColor=_sc(cfg.getStr('tracerColor','255,255,255')) tracerOrigin=cfg.getStr('tracerOrigin','Bottom')
+		setESPFeature('skeleton',skelEnabled) setESPFeature('box2d',box2dEnabled) setESPFeature('box3d',box3dEnabled)
+		setESPFeature('tag',tagEnabled) setESPFeature('weapon',weaponEnabled) setESPFeature('tracer',tracerEnabled)
+		if fovRing then fovRing.Color=faFovColor end if maFovRing then maFovRing.Color=maFovColor end
+	end
+	local function applyConfig2()
 		BT.enabled=cfg.getBool('btEnabled',false) BT.color=_sc(cfg.getStr('btColor','255,255,255')) BT.duration=cfg.getNum('btDuration',1) BT.thick=cfg.getNum('btThick',1)
 		BT.fwdOff=cfg.getNum('btFwdOff',0) BT.downOff=cfg.getNum('btDownOff',0) BT.minDist=cfg.getNum('btMinDist',50) BT.drawTime=cfg.getNum('btDrawTime',0.5)
 		BT.shrinkTime=cfg.getNum('btShrinkTime',0.5) BT.fadeIn=cfg.getNum('btFadeIn',0.1) BT.fadeOut=cfg.getNum('btFadeOut',0.3) BT.screenTol=cfg.getNum('btScreenTol',100)
@@ -657,12 +669,9 @@ return function(ctx)
 		txtEnabled=cfg.getBool('txtEnabled',true) txtFont=cfg.getStr('txtFont','Gotham') txtSize=cfg.getNum('txtSize',13) txtBg=cfg.getBool('txtBg',false)
 		txtBgTrans=cfg.getNum('txtBgTrans',50) txtRainbow=cfg.getBool('txtRainbow',false) txtAlign=cfg.getStr('txtAlign','Left') txtStroke=cfg.getBool('txtStroke',true)
 		txtX=cfg.getNum('txtX',20) txtY=cfg.getNum('txtY',180)
-		rbFaFov=cfg.getBool('rbFaFov',false) rbMaFov=cfg.getBool('rbMaFov',false) rbSkel=cfg.getBool('rbSkel',false) rbHead=cfg.getBool('rbHead',false)
-		rbBox2d=cfg.getBool('rbBox2d',false) rbBox3d=cfg.getBool('rbBox3d',false) rbTagName=cfg.getBool('rbTagName',false) rbWeap=cfg.getBool('rbWeap',false)
-		rbTracer=cfg.getBool('rbTracer',false) rbBT=cfg.getBool('rbBT',false)
-		setESPFeature('skeleton',skelEnabled) setESPFeature('box2d',box2dEnabled) setESPFeature('box3d',box3dEnabled)
-		setESPFeature('tag',tagEnabled) setESPFeature('weapon',weaponEnabled) setESPFeature('tracer',tracerEnabled)
-		if fovRing then fovRing.Color=faFovColor end if maFovRing then maFovRing.Color=maFovColor end
+		rb.faFov=cfg.getBool('rb.faFov',false) rb.maFov=cfg.getBool('rb.maFov',false) rb.skel=cfg.getBool('rb.skel',false) rb.head=cfg.getBool('rb.head',false)
+		rb.box2d=cfg.getBool('rb.box2d',false) rb.box3d=cfg.getBool('rb.box3d',false) rb.tagName=cfg.getBool('rb.tagName',false) rb.weap=cfg.getBool('rb.weap',false)
+		rb.tracer=cfg.getBool('rb.tracer',false) rb.BT=cfg.getBool('rb.BT',false)
 	end
 	local function applyConfigTable(t)
 		local function b(k,d) local v=t[k] if v==nil then return d end return v=='true' end
@@ -682,6 +691,14 @@ return function(ctx)
 		tagShowHealth=b('tagShowHealth',true) tagShowDist=b('tagShowDist',true) tagShowName=b('tagShowName',true) tagNameColor=_sc(s('tagNameColor','255,255,255'))
 		weaponEnabled=b('weaponEnabled',false) weapColor=_sc(s('weapColor','255,255,255'))
 		tracerEnabled=b('tracerEnabled',false) tracerThick=n('tracerThick',1) tracerColor=_sc(s('tracerColor','255,255,255')) tracerOrigin=s('tracerOrigin','Bottom')
+		setESPFeature('skeleton',skelEnabled) setESPFeature('box2d',box2dEnabled) setESPFeature('box3d',box3dEnabled)
+		setESPFeature('tag',tagEnabled) setESPFeature('weapon',weaponEnabled) setESPFeature('tracer',tracerEnabled)
+		if fovRing then fovRing.Color=faFovColor end if maFovRing then maFovRing.Color=maFovColor end
+	end
+	local function applyConfigTable2(t)
+		local function b(k,d) local v=t[k] if v==nil then return d end return v=='true' end
+		local function n(k,d) return tonumber(t[k]) or d end
+		local function s(k,d) local v=t[k] if v and v~='' then return v end return d end
 		BT.enabled=b('btEnabled',false) BT.color=_sc(s('btColor','255,255,255')) BT.duration=n('btDuration',1) BT.thick=n('btThick',1)
 		BT.fwdOff=n('btFwdOff',0) BT.downOff=n('btDownOff',0) BT.minDist=n('btMinDist',50) BT.drawTime=n('btDrawTime',0.5)
 		BT.shrinkTime=n('btShrinkTime',0.5) BT.fadeIn=n('btFadeIn',0.1) BT.fadeOut=n('btFadeOut',0.3) BT.screenTol=n('btScreenTol',100)
@@ -689,14 +706,10 @@ return function(ctx)
 		txtEnabled=b('txtEnabled',true) txtFont=s('txtFont','Gotham') txtSize=n('txtSize',13) txtBg=b('txtBg',false)
 		txtBgTrans=n('txtBgTrans',50) txtRainbow=b('txtRainbow',false) txtAlign=s('txtAlign','Left') txtStroke=b('txtStroke',true)
 		txtX=n('txtX',20) txtY=n('txtY',180)
-		rbFaFov=b('rbFaFov',false) rbMaFov=b('rbMaFov',false) rbSkel=b('rbSkel',false) rbHead=b('rbHead',false)
-		rbBox2d=b('rbBox2d',false) rbBox3d=b('rbBox3d',false) rbTagName=b('rbTagName',false) rbWeap=b('rbWeap',false)
-		rbTracer=b('rbTracer',false) rbBT=b('rbBT',false)
-		setESPFeature('skeleton',skelEnabled) setESPFeature('box2d',box2dEnabled) setESPFeature('box3d',box3dEnabled)
-		setESPFeature('tag',tagEnabled) setESPFeature('weapon',weaponEnabled) setESPFeature('tracer',tracerEnabled)
-		if fovRing then fovRing.Color=faFovColor end if maFovRing then maFovRing.Color=maFovColor end
-		faUnhook()
-		maStop()
+		rb.faFov=b('rb.faFov',false) rb.maFov=b('rb.maFov',false) rb.skel=b('rb.skel',false) rb.head=b('rb.head',false)
+		rb.box2d=b('rb.box2d',false) rb.box3d=b('rb.box3d',false) rb.tagName=b('rb.tagName',false) rb.weap=b('rb.weap',false)
+		rb.tracer=b('rb.tracer',false) rb.BT=b('rb.BT',false)
+		faUnhook() maStop()
 		if tbStop_ref then tbStop_ref() end
 		btStop()
 		if faEnabled then faHook() end
@@ -871,7 +884,7 @@ return function(ctx)
 		yL=yL+mkDiv(leftCol,yL,W)
 		do local _h,_s=mkSlider(leftCol,'FOV Radius',yL,W,10,1000,FA_Range.Value,'px',function(v) FA_Range.Value=v if fovRing then fovRing.Radius=v end onFaChanged() end) UISetters.faRange=_s yL=yL+_h end
 		yL=yL+mkDiv(leftCol,yL,W)
-		yL=yL+(mkColorP(leftCol,yL,W,'FOV Color',faFovColor,function(col) faFovColor=col if fovRing then fovRing.Color=col end rbFaFov=false onFaChanged() end,sgAim,rbFaFov))
+		yL=yL+(mkColorP(leftCol,yL,W,'FOV Color',faFovColor,function(col) faFovColor=col if fovRing then fovRing.Color=col end rb.faFov=false onFaChanged() end,sgAim,rb.faFov))
 		yL=yL+mkDiv(leftCol,yL,W) yL=yL+mkSec(leftCol,yL,W,'TRIGGERBOT')
 		do local _h,_s=mkToggle(leftCol,'TriggerBot',yL,W,TB_enabled,tbSetEnabled) UISetters.tbEnabled=function(v) _s(v,true) end yL=yL+_h end
 		yL=yL+mkDiv(leftCol,yL,W)
@@ -883,7 +896,7 @@ return function(ctx)
 		yR=yR+mkDiv(rightCol,yR,W) yR=yR+mkSec(rightCol,yR,W,'SETTINGS')
 		do local _h,_s=mkSlider(rightCol,'FOV',yR,W,1,1000,MA_fov.Value,'px',function(v) MA_fov.Value=v if maFovRing then maFovRing.Radius=v end onFaChanged() end) UISetters.maFov=_s yR=yR+_h end
 		yR=yR+mkDiv(rightCol,yR,W)
-		yR=yR+(mkColorP(rightCol,yR,W,'FOV Color',maFovColor,function(col) maFovColor=col if maFovRing then maFovRing.Color=col end rbMaFov=false onFaChanged() end,sgAim,rbMaFov))
+		yR=yR+(mkColorP(rightCol,yR,W,'FOV Color',maFovColor,function(col) maFovColor=col if maFovRing then maFovRing.Color=col end rb.maFov=false onFaChanged() end,sgAim,rb.maFov))
 		yR=yR+mkDiv(rightCol,yR,W)
 		do local _h,_s=mkSlider(rightCol,'Aim Speed',yR,W,10,1000,MA_speed.Value,'',function(v) MA_speed.Value=v onFaChanged() end) UISetters.maSpeed=_s yR=yR+_h end
 		yR=yR+mkDiv(rightCol,yR,W)
@@ -948,27 +961,27 @@ return function(ctx)
 		yRL=yRL+mkSec(rL,yRL,RW,'SKELETON')
 		do local _h,_s=mkToggle(rL,'Skeleton',yRL,RW,skelEnabled,function(s) skelEnabled=s setESPFeature('skeleton',s) onEspChanged() end) UISetters.skelEnabled=function(v) _s(v,true) end yRL=yRL+_h end
 		do local _h,_s=mkSubSlider(rL,'Thickness',yRL,RW,1,10,math.clamp(math.round(skelThick*2),1,10),'',function(v) skelThick=v/2 for _,e in Refs.skel do for k,l in e do if k~='HeadDot' then l.Thickness=skelThick end end end onEspChanged() end) UISetters.skelThick=_s yRL=yRL+_h end
-		yRL=yRL+(mkSubColor(rL,yRL,RW,'Color',skelColor,function(col) applySkelColor(col) rbSkel=false onEspChanged() end,sgRend,rbSkel))
+		yRL=yRL+(mkSubColor(rL,yRL,RW,'Color',skelColor,function(col) applySkelColor(col) rb.skel=false onEspChanged() end,sgRend,rb.skel))
 		yRL=yRL+mkDiv(rL,yRL,RW)
 		do local _h,_s=mkToggle(rL,'Head Dot',yRL,RW,skelHeadDot,function(s) skelHeadDot=s if not s then for _,e in Refs.skel do e.HeadDot.Visible=false end end onEspChanged() end) UISetters.skelHeadDot=function(v) _s(v,true) end yRL=yRL+_h end
 		do local _h,_s=mkSubSlider(rL,'Size',yRL,RW,1,12,math.clamp(math.round(headDotSize),1,12),'px',function(v) applyHeadDotSize(v) onEspChanged() end) UISetters.headDotSize=_s yRL=yRL+_h end
 		do local _h,_s=mkSubSlider(rL,'Transparency',yRL,RW,0,100,math.clamp(math.round(headDotTrans*100),0,100),'%',function(v) applyHeadDotTrans(v/100) onEspChanged() end) UISetters.headDotTrans=_s yRL=yRL+_h end
-		yRL=yRL+(mkSubColor(rL,yRL,RW,'Color',headDotColor,function(col) applyHeadDotColor(col) rbHead=false onEspChanged() end,sgRend,rbHead))
+		yRL=yRL+(mkSubColor(rL,yRL,RW,'Color',headDotColor,function(col) applyHeadDotColor(col) rb.head=false onEspChanged() end,sgRend,rb.head))
 		yRL=yRL+mkDiv(rL,yRL,RW) yRL=yRL+mkSec(rL,yRL,RW,'2D BOX')
 		do local _h,_s=mkToggle(rL,'2D Box',yRL,RW,box2dEnabled,function(s) box2dEnabled=s setESPFeature('box2d',s) onEspChanged() end) UISetters.box2dEnabled=function(v) _s(v,true) end yRL=yRL+_h end
 		do local _h,_s=mkSubSlider(rL,'Thickness',yRL,RW,1,10,math.clamp(math.round(box2dThick*2),1,10),'',function(v) box2dThick=v/2 for _,e in Refs.box2d do for _,l in e do l.Thickness=box2dThick end end onEspChanged() end) UISetters.box2dThick=_s yRL=yRL+_h end
-		yRL=yRL+(mkSubColor(rL,yRL,RW,'Color',box2dColor,function(col) applyBox2dColor(col) rbBox2d=false onEspChanged() end,sgRend,rbBox2d))
+		yRL=yRL+(mkSubColor(rL,yRL,RW,'Color',box2dColor,function(col) applyBox2dColor(col) rb.box2d=false onEspChanged() end,sgRend,rb.box2d))
 		yRL=yRL+mkDiv(rL,yRL,RW) yRL=yRL+mkSec(rL,yRL,RW,'3D BOX')
 		do local _h,_s=mkToggle(rL,'3D Box',yRL,RW,box3dEnabled,function(s) box3dEnabled=s setESPFeature('box3d',s) onEspChanged() end) UISetters.box3dEnabled=function(v) _s(v,true) end yRL=yRL+_h end
 		do local _h,_s=mkSubSlider(rL,'Thickness',yRL,RW,1,10,math.clamp(math.round(box3dThick*2),1,10),'',function(v) box3dThick=v/2 for _,e in Refs.box3d do for _,l in e do l.Thickness=box3dThick end end onEspChanged() end) UISetters.box3dThick=_s yRL=yRL+_h end
-		yRL=yRL+(mkSubColor(rL,yRL,RW,'Color',box3dColor,function(col) applyBox3dColor(col) rbBox3d=false onEspChanged() end,sgRend,rbBox3d))
+		yRL=yRL+(mkSubColor(rL,yRL,RW,'Color',box3dColor,function(col) applyBox3dColor(col) rb.box3d=false onEspChanged() end,sgRend,rb.box3d))
 		do local _h,_s=mkToggle(rR,'Name Tag',yRR,RW,tagEnabled,function(s) tagEnabled=s setESPFeature('tag',s) onEspChanged() end) UISetters.tagEnabled=function(v) _s(v,true) end yRR=yRR+_h end
 		do local _h,_s=mkToggle(rR,'Weapon ESP',yRR,RW,weaponEnabled,function(s) weaponEnabled=s setESPFeature('weapon',s) onEspChanged() end) UISetters.weapEnabled=function(v) _s(v,true) end yRR=yRR+_h end
 		do local _h,_s=mkSubSlider(rR,'Scale',yRR,RW,50,200,math.clamp(math.round(tagScale*100),50,200),'%',function(v) tagScale=v/100 onEspChanged() end) UISetters.tagScale=_s yRR=yRR+_h end
 		yRR=yRR+mkMulti(rR,yRR,RW,{'Health','Distance','Name'},{Health=tagShowHealth,Distance=tagShowDist,Name=tagShowName},1,function(state) tagShowHealth=state['Health'] tagShowDist=state['Distance'] tagShowName=state['Name'] onEspChanged() end)
-		yRR=yRR+(mkSubColor(rR,yRR,RW,'Name Color',tagNameColor,function(col) tagNameColor=col for _,e in Refs.tag do e.name.TextColor3=col end rbTagName=false onEspChanged() end,sgRend,rbTagName))
+		yRR=yRR+(mkSubColor(rR,yRR,RW,'Name Color',tagNameColor,function(col) tagNameColor=col for _,e in Refs.tag do e.name.TextColor3=col end rb.tagName=false onEspChanged() end,sgRend,rb.tagName))
 		yRR=yRR+mkDiv(rR,yRR,RW)
-		yRR=yRR+(mkSubColor(rR,yRR,RW,'Weapon Color',weapColor,function(col) weapColor=col for _,e in Refs.weap do e.lbl.TextColor3=col end rbWeap=false onEspChanged() end,sgRend,rbWeap))
+		yRR=yRR+(mkSubColor(rR,yRR,RW,'Weapon Color',weapColor,function(col) weapColor=col for _,e in Refs.weap do e.lbl.TextColor3=col end rb.weap=false onEspChanged() end,sgRend,rb.weap))
 		yRR=yRR+mkDiv(rR,yRR,RW)
 		local TAG_FONT_NAMES={'Gotham','Arial','Jura','Scifi'} local TAG_FONT_FAMS={Gotham='GothamSSm',Arial='Arial',Jura='Jura',Scifi='SciFi'}
 		local tfRow=Instance.new('Frame',rR) tfRow.Position=UDim2.fromOffset(0,yRR) tfRow.Size=UDim2.fromOffset(RW,28) tfRow.BackgroundColor3=Color3.fromRGB(14,14,14) tfRow.BorderSizePixel=0
@@ -985,7 +998,7 @@ return function(ctx)
 		yRR=yRR+mkDiv(rR,yRR,RW) yRR=yRR+mkSec(rR,yRR,RW,'TRACERS')
 		do local _h,_s=mkToggle(rR,'Tracers',yRR,RW,tracerEnabled,function(s) tracerEnabled=s setESPFeature('tracer',s) onEspChanged() end) UISetters.tracerEnabled=function(v) _s(v,true) end yRR=yRR+_h end
 		do local _h,_s=mkSubSlider(rR,'Thickness',yRR,RW,1,10,math.clamp(math.round(tracerThick*2),1,10),'',function(v) tracerThick=v/2 for _,l in Refs.tracer do l.Thickness=tracerThick end onEspChanged() end) UISetters.tracerThick=_s yRR=yRR+_h end
-		yRR=yRR+(mkSubColor(rR,yRR,RW,'Color',tracerColor,function(col) applyTracerColor(col) rbTracer=false onEspChanged() end,sgRend,rbTracer))
+		yRR=yRR+(mkSubColor(rR,yRR,RW,'Color',tracerColor,function(col) applyTracerColor(col) rb.tracer=false onEspChanged() end,sgRend,rb.tracer))
 		yRR=yRR+mkDiv(rR,yRR,RW)
 		mkSingle(rR,yRR,RW,{'Top','Middle','Bottom'},tracerOrigin,function(v) tracerOrigin=v onEspChanged() end)
 		yRR=yRR+mkDiv(rR,yRR,RW)
@@ -1005,7 +1018,7 @@ return function(ctx)
 		do local _h,_s=mkToggle(col,'Bullet Trails',y,W,BT.enabled,function(s) BT.enabled=s if s then btStart() else btStop() end onEspChanged() end) UISetters.btEnabled=function(v) _s(v,true) end y=y+_h end
 		do local _h,_s=mkSubSlider(col,'Duration',y,W,1,100,math.round(BT.duration*10),'s',function(v) BT.duration=v/10 onEspChanged() end) UISetters.btDuration=_s y=y+_h end
 		do local _h,_s=mkSubSlider(col,'Thickness',y,W,1,20,math.round(BT.thick*2),'',function(v) BT.thick=v/2 onEspChanged() end) UISetters.btThick=_s y=y+_h end
-		y=y+(mkSubColor(col,y,W,'Color',BT.color,function(c2) BT.color=c2 rbBT=false onEspChanged() end,sgFun,rbBT))
+		y=y+(mkSubColor(col,y,W,'Color',BT.color,function(c2) BT.color=c2 rb.BT=false onEspChanged() end,sgFun,rb.BT))
 		y=y+mkDiv(col,y,W)
 		y=y+mkSec(col,y,W,'HIT EFFECTS')
 		local BUILTIN={
@@ -1315,8 +1328,8 @@ return function(ctx)
 	return {
 		entitylib      = entitylib,
 		saveAll        = saveAll,
-		applyConfig    = applyConfig,
-		applyConfigTable = applyConfigTable,
+		applyConfig    = function() applyConfig() applyConfig2() end,
+		applyConfigTable = function(t) applyConfigTable(t) applyConfigTable2(t) end,
 		applyUIState   = applyUIState,
 		buildAimGUI    = buildAimGUI,
 		buildRenderGUI = buildRenderGUI,
